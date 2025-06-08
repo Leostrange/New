@@ -302,6 +302,86 @@ class BackupManager {
       this.options.onBackupError(error);
     }
   }
+  
+  /**
+   * Массовый экспорт всех пользовательских данных (профили, темы, настройки, аннотации, прогресс)
+   * @returns {Object} JSON-архив всех данных
+   */
+  exportAll() {
+    try {
+      // Профили
+      let profiles = [];
+      try {
+        const ProfileManager = require('../profile/ProfileManager');
+        const pm = new ProfileManager();
+        profiles = JSON.parse(localStorage.getItem(pm.storageKey) || '[]');
+      } catch {}
+      // Пользовательские темы
+      let userThemes = [];
+      try {
+        userThemes = JSON.parse(localStorage.getItem('mrcomic-user-themes') || '[]');
+      } catch {}
+      // Настройки приложения (все ключи mrcomic-*)
+      const settings = {};
+      Object.keys(localStorage).forEach(k => {
+        if (k.startsWith('mrcomic-')) settings[k] = localStorage.getItem(k);
+      });
+      // Прогресс, аннотации, закладки (старый формат)
+      let readingProgress = [];
+      let bookmarks = [];
+      let annotations = [];
+      try {
+        readingProgress = JSON.parse(localStorage.getItem('mr-comic-progress') || '[]');
+        bookmarks = JSON.parse(localStorage.getItem('mr-comic-bookmarks') || '[]');
+        annotations = JSON.parse(localStorage.getItem('mr-comic-annotations') || '[]');
+      } catch {}
+      return {
+        version: 2,
+        timestamp: new Date().toISOString(),
+        profiles,
+        userThemes,
+        settings,
+        readingProgress,
+        bookmarks,
+        annotations
+      };
+    } catch (e) {
+      console.error('Ошибка экспорта всех данных:', e);
+      this.triggerBackupError('Ошибка экспорта всех данных: ' + e.message);
+      return null;
+    }
+  }
+
+  /**
+   * Массовый импорт всех пользовательских данных (профили, темы, настройки, аннотации, прогресс)
+   * @param {Object} data - JSON-архив
+   */
+  async importAll(data) {
+    try {
+      // Профили
+      if (data.profiles) {
+        const ProfileManager = require('../profile/ProfileManager');
+        localStorage.setItem('mrcomic-profiles', JSON.stringify(data.profiles));
+        // Можно вызвать pm._saveProfiles() для обновления
+      }
+      // Пользовательские темы
+      if (data.userThemes) {
+        localStorage.setItem('mrcomic-user-themes', JSON.stringify(data.userThemes));
+      }
+      // Настройки
+      if (data.settings) {
+        Object.entries(data.settings).forEach(([k, v]) => localStorage.setItem(k, v));
+      }
+      // Прогресс, аннотации, закладки
+      if (data.readingProgress) localStorage.setItem('mr-comic-progress', JSON.stringify(data.readingProgress));
+      if (data.bookmarks) localStorage.setItem('mr-comic-bookmarks', JSON.stringify(data.bookmarks));
+      if (data.annotations) localStorage.setItem('mr-comic-annotations', JSON.stringify(data.annotations));
+      this.triggerBackupRestored(data);
+    } catch (e) {
+      console.error('Ошибка импорта всех данных:', e);
+      this.triggerBackupError('Ошибка импорта всех данных: ' + e.message);
+    }
+  }
 }
 
 // Экспортируем класс

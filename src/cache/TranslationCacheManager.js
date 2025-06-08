@@ -40,6 +40,9 @@ class TranslationCacheManager {
     this._initStorage();
     
     this.logger?.info(`TranslationCacheManager initialized with ${this.storageType} storage`);
+
+    this.prefix = options.prefix || 'mrcomic-translation-cache-';
+    this.useIndexedDB = typeof window !== 'undefined' && window.indexedDB && window.IDBKeyRange;
   }
 
   /**
@@ -278,6 +281,54 @@ class TranslationCacheManager {
     } catch (error) {
       this.logger?.warn('Error estimating value size', error);
       return 1024; // Возвращаем значение по умолчанию
+    }
+  }
+
+  // Сохраняет страницу по id (dataUrl)
+  async savePage(id, dataUrl) {
+    if (this.useIndexedDB && window.idbKeyval) {
+      await window.idbKeyval.set(this.prefix + id, dataUrl);
+    } else {
+      localStorage.setItem(this.prefix + id, dataUrl);
+    }
+  }
+
+  // Загружает страницу по id
+  async loadPage(id) {
+    if (this.useIndexedDB && window.idbKeyval) {
+      return await window.idbKeyval.get(this.prefix + id);
+    } else {
+      return localStorage.getItem(this.prefix + id);
+    }
+  }
+
+  // Очищает одну страницу
+  async clearPage(id) {
+    if (this.useIndexedDB && window.idbKeyval) {
+      await window.idbKeyval.del(this.prefix + id);
+    } else {
+      localStorage.removeItem(this.prefix + id);
+    }
+  }
+
+  // Очищает весь кэш
+  async clearAll() {
+    if (this.useIndexedDB && window.idbKeyval) {
+      // Нет стандартного метода очистки по префиксу — нужно вручную
+      const keys = await window.idbKeyval.keys();
+      for (const key of keys) {
+        if (typeof key === 'string' && key.startsWith(this.prefix)) {
+          await window.idbKeyval.del(key);
+        }
+      }
+    } else {
+      // localStorage
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(this.prefix)) {
+          localStorage.removeItem(key);
+        }
+      }
     }
   }
 }

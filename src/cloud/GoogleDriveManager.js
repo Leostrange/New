@@ -625,6 +625,36 @@ class GoogleDriveManager {
   isGoogleApiLoaded() {
     return this.isApiLoaded;
   }
+  
+  /**
+   * Получение метаданных файла по имени
+   * @param {string} fileName - Имя файла
+   * @returns {Promise<Object|null>} Метаданные файла или null, если не найден
+   */
+  async getFileMetadata(fileName) {
+    if (!this.isApiLoaded || !this.isAuthorized) {
+      throw new Error('Необходима авторизация для получения метаданных файла');
+    }
+    if (!fileName) {
+      throw new Error('Имя файла не указано');
+    }
+    try {
+      // Ищем файл по имени
+      const query = `name = '${fileName.replace(/'/g, "\\'")}' and trashed = false`;
+      const result = await this.listFiles({
+        query,
+        pageSize: 1,
+        fields: 'files(id, name, mimeType, size, modifiedTime, webViewLink)'
+      });
+      if (result.files && result.files.length > 0) {
+        return result.files[0];
+      }
+      return null;
+    } catch (error) {
+      console.error('Ошибка при получении метаданных файла из Google Drive:', error);
+      throw error;
+    }
+  }
 }
 
 // Экспортируем класс

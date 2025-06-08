@@ -20,6 +20,9 @@ import PDFFormatHandler from './PDFFormatHandler';
 
 import { FormatParserFallbackManager } from './FormatParserFallbackManager';
 
+import CBZFormatHandler from './CBZFormatHandler';
+import CBRFormatHandler from './CBRFormatHandler';
+
 // Класс для управления форматами
 class FormatManager {
   constructor() {
@@ -47,6 +50,12 @@ class FormatManager {
     
     // Регистрация обработчика PDF
     this.registerHandler(new PDFFormatHandler());
+    
+    // Регистрация обработчика CBZ
+    this.registerHandler(new CBZFormatHandler());
+    
+    // Регистрация обработчика CBR
+    this.registerHandler(new CBRFormatHandler());
   }
 
   /**
@@ -100,6 +109,9 @@ export {
   PDFParser,
   PDFParserWithFallback,
   PDFFormatHandler,
+  
+  CBZFormatHandler,
+  CBRFormatHandler,
   
   FormatParserFallbackManager,
   FormatManager
