@@ -37,14 +37,21 @@ public class PluginManager {
      */
     @NonNull
     public CompletableFuture<Plugin> loadPluginFromFile(@NonNull File pluginFile, @NonNull String pluginClassName) {
+        PluginLogger.i("Attempting to load plugin from file: " + pluginFile.getName());
         return pluginLoader.loadPluginFromFile(pluginFile, pluginClassName)
                 .thenCompose(plugin -> pluginSandbox.scanForMalware(plugin).thenApply(isSafe -> {
                     if (!isSafe) {
+                        PluginLogger.e("Malware detected in plugin: " + plugin.getPluginId(), null);
                         throw new SecurityException("Plugin " + plugin.getPluginId() + " failed malware scan.");
                     }
                     loadedPlugins.put(plugin.getPluginId(), plugin);
+                    PluginLogger.i("Plugin loaded successfully: " + plugin.getPluginId());
                     return plugin;
-                }));
+                }))
+                .exceptionally(ex -> {
+                    PluginLogger.e("Failed to load plugin from file: " + pluginFile.getName(), ex);
+                    throw new RuntimeException(ex);
+                });
     }
 
     /**
@@ -58,9 +65,15 @@ public class PluginManager {
     public CompletableFuture<Void> initializePlugin(@NonNull String pluginId, @Nullable Map<String, Object> config) {
         Plugin plugin = loadedPlugins.get(pluginId);
         if (plugin != null) {
+            PluginLogger.i("Attempting to initialize plugin: " + pluginId);
             return pluginSandbox.isolatePlugin(plugin)
-                    .thenCompose(v -> plugin.initialize(context, config));
+                    .thenCompose(v -> plugin.initialize(context, config))
+                    .exceptionally(ex -> {
+                        PluginLogger.e("Failed to initialize plugin: " + pluginId, ex);
+                        throw new RuntimeException(ex);
+                    });
         } else {
+            PluginLogger.w("Attempted to initialize an unloaded plugin: " + pluginId);
             return CompletableFuture.failedFuture(new IllegalArgumentException("Plugin not loaded: " + pluginId));
         }
     }
@@ -75,8 +88,14 @@ public class PluginManager {
     public CompletableFuture<Void> startPlugin(@NonNull String pluginId) {
         Plugin plugin = loadedPlugins.get(pluginId);
         if (plugin != null) {
-            return plugin.start();
+            PluginLogger.i("Attempting to start plugin: " + pluginId);
+            return plugin.start()
+                    .exceptionally(ex -> {
+                        PluginLogger.e("Failed to start plugin: " + pluginId, ex);
+                        throw new RuntimeException(ex);
+                    });
         } else {
+            PluginLogger.w("Attempted to start an unloaded plugin: " + pluginId);
             return CompletableFuture.failedFuture(new IllegalArgumentException("Plugin not loaded: " + pluginId));
         }
     }
@@ -85,14 +104,21 @@ public class PluginManager {
      * Останавливает запущенный плагин.
      * 
      * @param pluginId идентификатор плагина
+     * 
      * @return Future, который завершается при успешной остановке
      */
     @NonNull
     public CompletableFuture<Void> stopPlugin(@NonNull String pluginId) {
         Plugin plugin = loadedPlugins.get(pluginId);
         if (plugin != null) {
-            return plugin.stop();
+            PluginLogger.i("Attempting to stop plugin: " + pluginId);
+            return plugin.stop()
+                    .exceptionally(ex -> {
+                        PluginLogger.e("Failed to stop plugin: " + pluginId, ex);
+                        throw new RuntimeException(ex);
+                    });
         } else {
+            PluginLogger.w("Attempted to stop an unloaded plugin: " + pluginId);
             return CompletableFuture.failedFuture(new IllegalArgumentException("Plugin not loaded: " + pluginId));
         }
     }
@@ -107,9 +133,15 @@ public class PluginManager {
     public CompletableFuture<Void> unloadPlugin(@NonNull String pluginId) {
         Plugin plugin = loadedPlugins.remove(pluginId);
         if (plugin != null) {
+            PluginLogger.i("Attempting to unload plugin: " + pluginId);
             return pluginSandbox.deisolatePlugin(plugin)
-                    .thenCompose(v -> plugin.destroy());
+                    .thenCompose(v -> plugin.destroy())
+                    .exceptionally(ex -> {
+                        PluginLogger.e("Failed to unload plugin: " + pluginId, ex);
+                        throw new RuntimeException(ex);
+                    });
         } else {
+            PluginLogger.w("Attempted to unload an unloaded plugin: " + pluginId);
             return CompletableFuture.failedFuture(new IllegalArgumentException("Plugin not loaded: " + pluginId));
         }
     }
@@ -142,13 +174,15 @@ public class PluginManager {
      * @return true, если все зависимости удовлетворены, иначе false
      */
     public boolean checkDependencies(@NonNull Plugin plugin) {
+        PluginLogger.d("Checking dependencies for plugin: " + plugin.getPluginId());
         for (String dependencyId : plugin.getDependencies()) {
             Plugin dependency = loadedPlugins.get(dependencyId);
             if (dependency == null || !plugin.isCompatibleWith(dependencyId, dependency.getPluginVersion())) {
-                // Зависимость не найдена или несовместима
+                PluginLogger.w("Dependency " + dependencyId + " for plugin " + plugin.getPluginId() + " not met or incompatible.");
                 return false;
             }
         }
+        PluginLogger.d("All dependencies met for plugin: " + plugin.getPluginId());
         return true;
     }
 
@@ -162,10 +196,15 @@ public class PluginManager {
      */
     @NonNull
     public CompletableFuture<Plugin> updatePlugin(@NonNull String pluginId, @NonNull File newPluginFile, @NonNull String newPluginClassName) {
+        PluginLogger.i("Attempting to update plugin: " + pluginId);
         return unloadPlugin(pluginId)
                 .thenCompose(v -> loadPluginFromFile(newPluginFile, newPluginClassName))
                 .thenCompose(newPlugin -> initializePlugin(newPlugin.getPluginId(), newPlugin.getConfiguration()).thenApply(v -> newPlugin))
-                .thenCompose(initializedPlugin -> startPlugin(initializedPlugin.getPluginId()).thenApply(v -> initializedPlugin));
+                .thenCompose(initializedPlugin -> startPlugin(initializedPlugin.getPluginId()).thenApply(v -> initializedPlugin))
+                .exceptionally(ex -> {
+                    PluginLogger.e("Failed to update plugin: " + pluginId, ex);
+                    throw new RuntimeException(ex);
+                });
     }
 
     /**
@@ -178,6 +217,7 @@ public class PluginManager {
      */
     @NonNull
     public CompletableFuture<Void> rollbackPlugin(@NonNull String pluginId, @NonNull String version) {
+        PluginLogger.w("Rollback functionality not fully implemented yet for plugin: " + pluginId);
         // TODO: Implement actual rollback logic, possibly involving a plugin store or local version cache
         return CompletableFuture.failedFuture(new UnsupportedOperationException("Rollback not yet implemented."));
     }
