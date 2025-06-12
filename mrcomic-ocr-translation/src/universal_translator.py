@@ -19,6 +19,8 @@ from pathlib import Path
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
+import onnxruntime
+import sentencepiece as spm
 
 # Настройка логирования
 logging.basicConfig(
@@ -41,6 +43,7 @@ class TranslatorEngine(Enum):
     COMIC_SPECIALIZED = "comic_specialized"
     MANGA_SPECIALIZED = "manga_specialized"
     FALLBACK_DICTIONARY = "fallback_dictionary"
+    SMALL100 = "small100"
 
 class TranslationDomain(Enum):
     """Домены перевода"""
@@ -246,6 +249,8 @@ class UniversalTranslationSystem:
                     self._init_manga_specialized()
                 elif engine == TranslatorEngine.FALLBACK_DICTIONARY:
                     self._init_fallback_dictionary()
+                elif engine == TranslatorEngine.SMALL100:
+                    self._init_small100()
                 
                 logger.info(f"Движок {engine.value} успешно инициализирован")
                 
@@ -350,52 +355,44 @@ class UniversalTranslationSystem:
                 'note': 'Требуется установка transformers'
             }
     
-    def _init_m2m100(self):
-        """Инициализация M2M-100"""
+    def _init_small100(self):
+        """Инициализация SMALL100"""
         try:
-            # Проверка доступности transformers
-            from transformers import M2M100ForConditionalGeneration, M2M100Tokenizer
-            
-            self.engines[TranslatorEngine.M2M100] = {
-                'initialized': False,
-                'note': 'M2M-100 модель (требуется загрузка)',
+            model_path = Path("/home/ubuntu/repos/Mr.Comic/local-translation-models/model.onnx")
+            tokenizer_path = Path("/home/ubuntu/repos/Mr.Comic/local-translation-models/sentencepiece.bpe.model")
+
+            if not model_path.exists():
+                logger.warning(f"Файл модели ONNX не найден: {model_path}")
+                self.engines[TranslatorEngine.SMALL100] = {
+                    'initialized': False,
+                    'note': 'Файл модели ONNX не найден'
+                }
+                return
+
+            if not tokenizer_path.exists():
+                logger.warning(f"Файл токенизатора SentencePiece не найден: {tokenizer_path}")
+                self.engines[TranslatorEngine.SMALL100] = {
+                    'initialized': False,
+                    'note': 'Файл токенизатора SentencePiece не найден'
+                }
+                return
+
+            self.engines[TranslatorEngine.SMALL100] = {
+                'session': onnxruntime.InferenceSession(str(model_path)),
+                'tokenizer': spm.SentencePieceProcessor(model_file=str(tokenizer_path)),
+                'initialized': True,
                 'type': 'local',
-                'languages': ['en', 'ru', 'ja', 'ko', 'zh', 'ar', 'hi', 'th', 'vi']
+                'languages': ['en', 'ru', 'ja', 'ko', 'zh', 'es', 'fr', 'de'],
+                'rate_limit': 0.01  # Локальная модель, можно переводить быстрее
             }
-            
-        except ImportError:
-            self.engines[TranslatorEngine.M2M100] = {
+            logger.info("SMALL100 успешно инициализирован")
+        except Exception as e:
+            logger.error(f"Ошибка инициализации SMALL100: {e}")
+            self.engines[TranslatorEngine.SMALL100] = {
                 'initialized': False,
-                'note': 'Требуется установка transformers'
+                'note': f'Ошибка инициализации: {e}'
             }
-    
-    def _init_nllb(self):
-        """Инициализация NLLB (No Language Left Behind)"""
-        try:
-            # Проверка доступности transformers
-            from transformers import NllbTokenizer, M2M100ForConditionalGeneration
-            
-            self.engines[TranslatorEngine.NLLB] = {
-                'initialized': False,
-                'note': 'NLLB модель (требуется загрузка)',
-                'type': 'local',
-                'languages': ['eng_Latn', 'rus_Cyrl', 'jpn_Jpan', 'kor_Hang', 'zho_Hans']
-            }
-            
-        except ImportError:
-            self.engines[TranslatorEngine.NLLB] = {
-                'initialized': False,
-                'note': 'Требуется установка transformers'
-            }
-    
-    def _init_comic_specialized(self):
-        """Инициализация специализированного переводчика для комиксов"""
-        self.engines[TranslatorEngine.COMIC_SPECIALIZED] = {
-            'initialized': True,
-            'type': 'specialized',
-            'domains': [TranslationDomain.COMIC, TranslationDomain.DIALOGUE, TranslationDomain.SOUND_EFFECT],
-            'note': 'Специализированный переводчик для комиксов'
-        }
+        # Инициализация M2M-100
     
     def _init_manga_specialized(self):
         """Инициализация специализированного переводчика для манги"""
@@ -1027,4 +1024,191 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+            model_path = Path("local-translation-models/model.onnx")
+            tokenizer_path = Path("local-translation-models/sentencepiece.bpe.model")
+
+            if not model_path.exists():
+                logger.warning(f"ONNX model not found at {model_path}")
+                self.engines[TranslatorEngine.SMALL100] = {
+                    'initialized': False,
+                    'note': f'ONNX model not found at {model_path}'
+                }
+                return
+            
+            if not tokenizer_path.exists():
+                logger.warning(f"SentencePiece tokenizer not found at {tokenizer_path}")
+                self.engines[TranslatorEngine.SMALL100] = {
+                    'initialized': False,
+                    'note': f'SentencePiece tokenizer not found at {tokenizer_path}'
+                }
+                return
+
+            self.engines[TranslatorEngine.SMALL100] = {
+                'initialized': True,
+                'type': 'local',
+                'session': onnxruntime.InferenceSession(str(model_path)),
+                'tokenizer': spm.SentencePieceProcessor(model_file=str(tokenizer_path)),
+                'languages': ['en', 'ru', 'ja', 'ko', 'zh', 'es', 'fr', 'de'], # Пример поддерживаемых языков
+                'note': 'Локальная ONNX-модель small100'
+            }
+            logger.info("ONNX-модель small100 успешно инициализирована")
+
+        except ImportError:
+            self.engines[TranslatorEngine.SMALL100] = {
+                'initialized': False,
+                'note': 'Требуется установка onnxruntime и sentencepiece'
+            }
+        except Exception as e:
+            logger.warning(f"Не удалось инициализировать ONNX-модель small100: {e}")
+            self.engines[TranslatorEngine.SMALL100] = {
+                'initialized': False,
+                'note': f'Ошибка инициализации small100: {e}'
+            }
+
+
+
+    def _translate_small100(self, text: str, source_lang: str, target_lang: str) -> Optional[str]:
+        """Перевод текста с использованием ONNX-модели small100"""
+        engine_info = self.engines.get(TranslatorEngine.SMALL100)
+        if not engine_info or not engine_info.get("initialized"):
+            logger.warning("small100 движок не инициализирован.")
+            return None
+
+        session = engine_info["session"]
+        tokenizer = engine_info["tokenizer"]
+
+        try:
+            # Предобработка текста
+            # Добавляем префикс для целевого языка, как это принято в small100
+            # Например, для русского языка: >>rus<<
+            # Для английского: >>eng<<
+            # Необходимо будет уточнить точные префиксы для всех поддерживаемых языков
+            # В данном примере используем упрощенный подход
+            lang_prefix_map = {
+                "en": ">>eng<<",
+                "ru": ">>rus<<",
+                "ja": ">>jpn<<",
+                "ko": ">>kor<<",
+                "zh": ">>zho<<",
+                "es": ">>spa<<",
+                "fr": ">>fra<<",
+                "de": ">>deu<<",
+            }
+            target_lang_prefix = lang_prefix_map.get(target_lang, f">>{target_lang}<<")
+            input_text = f"{target_lang_prefix} {text}"
+
+            # Токенизация
+            input_ids = tokenizer.encode(input_text, out_type=int)
+            # ONNX Runtime ожидает входные данные в виде numpy массивов
+            import numpy as np
+            input_ids = np.array([input_ids], dtype=np.int64)
+
+            # Выполнение инференса
+            outputs = session.run(None, {"input_ids": input_ids})
+            # Предполагаем, что выходной тензор называется 'output'
+            # И что это массив с одним элементом, который нужно детокенизировать
+            translated_tokens = outputs[0][0]
+
+            # Детокенизация
+            translated_text = tokenizer.decode(translated_tokens)
+
+            # Удаляем возможные артефакты токенизации (например, лишние пробелы в начале/конце)
+            translated_text = translated_text.strip()
+
+            logger.info(f"Перевод small100: {text} -> {translated_text}")
+            return translated_text
+
+        except Exception as e:
+            logger.error(f"Ошибка при переводе с small100: {e}")
+            return None
+
+
+
+    def _translate_small100(self, text: str, source_lang: str, target_lang: str) -> Tuple[str, float]:
+        """Перевод текста с использованием SMALL100"""
+        try:
+            engine_data = self.engines.get(TranslatorEngine.SMALL100)
+            if not engine_data or not engine_data.get("initialized"):
+                logger.warning("SMALL100 не инициализирован.")
+                return text, 0.0
+
+            session = engine_data["session"]
+            tokenizer = engine_data["tokenizer"]
+
+            # SMALL100 использует свои собственные коды языков
+            # TODO: Реализовать более сложную логику маппинга языков, если необходимо
+            # Для примера, предположим, что входные source_lang и target_lang уже совместимы
+            # или требуется их преобразование.
+            # Например, 'en' -> 'eng_Latn', 'ru' -> 'rus_Cyrl'
+            # Пока что используем напрямую, если они совпадают с ожидаемыми токенизатором
+
+            # Преобразование текста в токены
+            input_ids = tokenizer.encode_as_ids(text)
+            input_ids = [tokenizer.bos_id()] + input_ids + [tokenizer.eos_id()]
+            input_ids = [input_ids] # Добавляем батч-размер
+
+            # Выполнение инференса
+            # Входные и выходные имена могут отличаться в зависимости от модели ONNX
+            # Предполагаем, что вход - 'input_ids', выход - 'output_ids'
+            input_name = session.get_inputs()[0].name
+            output_name = session.get_outputs()[0].name
+
+            outputs = session.run([output_name], {input_name: input_ids})
+            output_ids = outputs[0][0]
+
+            # Декодирование токенов обратно в текст
+            translated_text = tokenizer.decode_ids(output_ids)
+
+            # SMALL100 не предоставляет прямого показателя уверенности, используем заглушку
+            confidence = 0.9  # Условное значение
+
+            return translated_text, confidence
+
+        except Exception as e:
+            logger.error(f"Ошибка перевода с использованием SMALL100: {e}")
+            return text, 0.0:
+            engine_info = self.engines.get(TranslatorEngine.SMALL100)
+            if not engine_info or not engine_info.get("initialized"):
+                logger.warning("SMALL100 не инициализирован.")
+                return text, 0.0
+
+            session = engine_info["session"]
+            tokenizer = engine_info["tokenizer"]
+
+            # Преобразование языковых кодов в формат, понятный модели small100
+            # small100 использует формат 'lang_code' (например, 'en', 'ru')
+            # Если модель small100 требует другой формат, это нужно будет адаптировать
+            # Для small100, языковые токены добавляются к входной последовательности
+            # Например, '__en__ ' для английского, '__ru__ ' для русского
+
+            # Токенизация входного текста
+            # Добавляем целевой языковой токен в начало
+            input_text = f"__{target_lang}__ {text}"
+            input_ids = tokenizer.encode(input_text, add_bos=True, add_eos=True)
+
+            # Подготовка входных данных для ONNX Runtime
+            input_name = session.get_inputs()[0].name
+            output_name = session.get_outputs()[0].name
+
+            # Выполнение инференса
+            outputs = session.run([output_name], {input_name: [input_ids]})
+            translated_ids = outputs[0][0]
+
+            # Детокенизация результата
+            translated_text = tokenizer.decode(translated_ids, skip_special_tokens=True)
+
+            # SMALL100 не предоставляет прямого показателя уверенности, используем заглушку
+            confidence = 0.95
+
+            return translated_text, confidence
+
+        except Exception as e:
+            logger.error(f"Ошибка при переводе с использованием SMALL100: {e}")
+            return text, 0.0
+
 
