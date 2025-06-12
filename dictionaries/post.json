@@ -1,12 +1,96 @@
 {
   "post_processing_rules": [
     {
-      "pattern": "pattern_1",
-      "replace_with": "replacement_1"
+      "pattern": "\\s+",
+      "replace_with": " "
     },
     {
-      "pattern": "pattern_2",
-      "replace_with": "replacement_2"
+      "pattern": "([.,!?])\\s*([.,!?])",
+      "replace_with": "$1"
+    },
+    {
+      "pattern": "(\\w+)\\s*-\\s*(\\w+)",
+      "replace_with": "$1-$2"
+    },
+    {
+      "pattern": "(\\w+)\\s*(\\w+)",
+      "replace_with": "$1 $2"
+    },
+    {
+      "pattern": "(\\s*)\\.\\s*\\.\\s*\\.(\\s*)",
+      "replace_with": "$1...$2"
+    },
+    {
+      "pattern": "(\\s*)\\!\\s*\\!\\s*\\!(\\s*)",
+      "replace_with": "$1!!!$2"
+    },
+    {
+      "pattern": "(\\s*)\\?\\s*\\?\\s*\\?(\\s*)",
+      "replace_with": "$1???$2"
+    },
+    {
+      "pattern": "(\\s*)\\!\\s*\\?(\\s*)",
+      "replace_with": "$1!?$2"
+    },
+    {
+      "pattern": "(\\s*)\\?\\s*\\!(\\s*)",
+      "replace_with": "$1?!$2"
+    },
+    {
+      "pattern": "(\\s*)\\.\\s*(\\s*)",
+      "replace_with": ". "
+    },
+    {
+      "pattern": "(\\s*),\\s*(\\s*)",
+      "replace_with": ", "
+    },
+    {
+      "pattern": "(\\s*);\\s*(\\s*)",
+      "replace_with": "; "
+    },
+    {
+      "pattern": "(\\s*):\\s*(\\s*)",
+      "replace_with": ": "
+    },
+    {
+      "pattern": "(\\s*)\\)\\s*(\\s*)",
+      "replace_with": ") "
+    },
+    {
+      "pattern": "(\\s*)\\((\\s*)",
+      "replace_with": " (" 
+    },
+    {
+      "pattern": "(\\s*)\\[(\\s*)",
+      "replace_with": " [" 
+    },
+    {
+      "pattern": "(\\s*)\\]\\s*(\\s*)",
+      "replace_with": "] "
+    },
+    {
+      "pattern": "(\\s*)\\{(\\s*)",
+      "replace_with": " {" 
+    },
+    {
+      "pattern": "(\\s*)\\}\\s*(\\s*)",
+      "replace_with": "} "
+    },
+    {
+      "pattern": "(\\s*)\\\"(\\s*)",
+      "replace_with": " \"" 
+    },
+    {
+      "pattern": "(\\s*)\\\"\\s*(\\s*)",
+      "replace_with": "\" "
+    },
+    {
+      "pattern": "(\\s*)\\\'(\\s*)",
+      "replace_with": " \'" 
+    },
+    {
+      "pattern": "(\\s*)\\\'\\s*(\\s*)",
+      "replace_with": "\' "
     }
   ]
 }
