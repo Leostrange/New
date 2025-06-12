@@ -18,27 +18,53 @@
     pip install -r requirements.txt
     ```
 
-2. **Скачайте модели:**
+2. **Установите Tesseract OCR:**
     ```bash
-    wget … -O local-translation-models/model.onnx
-    # (см. Фазу 1)
+    # Ubuntu/Debian
+    sudo apt update
+    sudo apt install tesseract-ocr tesseract-ocr-eng tesseract-ocr-rus
     ```
 
-3. **Запустите тест:**
+3. **Скачайте модели (опционально):**
+    ```bash
+    mkdir -p local-translation-models
+    wget https://huggingface.co/alirezamsh/small100/resolve/main/model.onnx -O local-translation-models/model.onnx
+    wget https://huggingface.co/alirezamsh/small100/resolve/main/sentencepiece.bpe.model -O local-translation-models/sentencepiece.bpe.model
+    ```
+    **Примечание:** Модель small100 весит ~1.8GB и требует значительных ресурсов памяти. Система работает и без неё, используя fallback перевод.
+
+4. **Запустите тест:**
     ```bash
     python test_pipeline.py
     ```
 
-4. **Переведите изображение:**
+5. **Переведите изображение:**
     ```bash
     python translate_from_image.py path/to/your/comic.png
     ```
 
+## Возможности
+
+- ✅ Модульная архитектура OCR-плагинов
+- ✅ Поддержка словарей для коррекции перевода
+- ✅ Fallback перевод при недоступности нейросетевой модели
+- ✅ Интеграция Tesseract OCR с поддержкой русского и английского языков
+- ✅ Полный пайплайн OCR + перевод
+- ✅ Автоматические тесты
+
+## Статус реализации
+
+**Фаза 1 ✅**: Структура каталогов и подготовка окружения
+**Фаза 2 ✅**: Реализация перевода через small100 + словари (с fallback)
+**Фаза 3 ✅**: Настройка и интеграция Tesseract OCR
+**Фаза 4 ✅**: OCR-плагины и модульность через CLI
+**Фаза 5 ✅**: Единый пайплайн, тестирование и документация
+
 ### Финальная проверка
 
 После выполнения всех фаз убедитесь, что:
-- Скрипт `test_pipeline.py` выполняется без ошибок.
-- Скрипт `translate_from_image.py` корректно обрабатывает изображения и выводит распознанный и переведенный текст.
-- Словари из папки `dictionaries/` корректно подхватываются и влияют на результат.
-- Система устойчива к пустым или некорректным входным данным.
+- ✅ Скрипт `test_pipeline.py` выполняется без ошибок.
+- ✅ Скрипт `translate_from_image.py` корректно обрабатывает изображения и выводит распознанный и переведенный текст.
+- ✅ Словари из папки `dictionaries/` корректно подхватываются и влияют на результат.
+- ✅ Система устойчива к пустым или некорректным входным данным.
 
