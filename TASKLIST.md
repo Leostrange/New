@@ -9,7 +9,7 @@
 
 День 1:
 
-[ ] Создать dictionaries/ с шаблонами pre.json, ocr.json, post.json
+[x] Создать dictionaries/ с шаблонами pre.json, ocr.json, post.json
 
 [ ] В universal_translator.py проверить загрузку и fallback
 
