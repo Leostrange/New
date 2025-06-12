@@ -1,2 +1,7 @@
-{}
+{
+  "corrections": [
+    ["incorrect_word_1", "correct_word_1"],
+    ["incorrect_word_2", "correct_word_2"]
+  ]
+}
 

@@ -1,2 +1,7 @@
-{}
+{
+  "replacements": [
+    ["old_text_1", "new_text_1"],
+    ["old_text_2", "new_text_2"]
+  ]
+}
 
