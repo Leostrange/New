@@ -467,20 +467,19 @@ class RevolutionaryOCRSystem:
                     if line:
                         bbox_points = line[0]
                         text_info = line[1]
-                        
                         text = text_info[0]
-                        confidence = text_info[1]
+                        confidence = float(text_info[1])
                         
-                        # Преобразование координат
-                        x_coords = [point[0] for point in bbox_points]
-                        y_coords = [point[1] for point in bbox_points]
-                        
-                        bbox = (
-                            int(min(x_coords)),
-                            int(min(y_coords)),
-                            int(max(x_coords) - min(x_coords)),
-                            int(max(y_coords) - min(y_coords))
-                        )
+                        # Преобразование bbox_points в (x, y, width, height)
+                        # bbox_points - это список из 4 точек [x1,y1], [x2,y2], [x3,y3], [x4,y4]
+                        # Находим минимальные и максимальные x и y
+                        x_coords = [p[0] for p in bbox_points]
+                        y_coords = [p[1] for p in bbox_points]
+                        x = int(min(x_coords))
+                        y = int(min(y_coords))
+                        width = int(max(x_coords) - x)
+                        height = int(max(y_coords) - y)
+                        bbox = (x, y, width, height)
                         
                         result = OCRResult(
                             text=text,
@@ -489,10 +488,9 @@ class RevolutionaryOCRSystem:
                             engine=OCREngine.PADDLEOCR,
                             language=self.detect_language(text),
                             processing_time=time.time() - start_time,
-                            metadata={'bbox_points': bbox_points}
+                            metadata={}
                         )
-                        
-                        results.append(result)
+                        results.append(result)             results.append(result)
             
         except Exception as e:
             logger.error(f"Ошибка PaddleOCR: {e}")
