@@ -765,3 +765,61 @@ def main():
 if __name__ == "__main__":
     main()
 
+
+
+    def ocr_with_easyocr(self, image: np.ndarray) -> List[OCRResult]:
+        """
+        Распознавание текста с помощью EasyOCR
+        
+        Args:
+            image: Изображение для распознавания
+            
+        Returns:
+            Список результатов распознавания
+        """
+        if OCREngine.EASYOCR not in self.engines or not self.engines[OCREngine.EASYOCR]["initialized"]:
+            return []
+        
+        start_time = time.time()
+        results = []
+        
+        try:
+            easy_reader = self.engines[OCREngine.EASYOCR]["engine"]
+            
+            # EasyOCR ожидает PIL Image или путь к файлу
+            # Если изображение уже в формате np.ndarray, конвертируем его в PIL Image
+            if isinstance(image, np.ndarray):
+                image_pil = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+            else:
+                image_pil = image
+
+            # Распознавание
+            ocr_results = easy_reader.readtext(np.array(image_pil))
+            
+            for (bbox_points, text, confidence) in ocr_results:
+                # bbox_points - это список из 4 точек [x1,y1], [x2,y2], [x3,y3], [x4,y4]
+                # Находим минимальные и максимальные x и y
+                x_coords = [p[0] for p in bbox_points]
+                y_coords = [p[1] for p in bbox_points]
+                x_min, y_min = int(min(x_coords)), int(min(y_coords))
+                x_max, y_max = int(max(x_coords)), int(max(y_coords))
+                
+                bbox = (x_min, y_min, x_max - x_min, y_max - y_min)
+                
+                result = OCRResult(
+                    text=text,
+                    confidence=float(confidence),
+                    bbox=bbox,
+                    engine=OCREngine.EASYOCR,
+                    language=self.detect_language(text),
+                    processing_time=time.time() - start_time,
+                    metadata={}
+                )
+                
+                results.append(result)
+            
+        except Exception as e:
+            logger.error(f"Ошибка EasyOCR: {e}")
+        
+        return results
+
