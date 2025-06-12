@@ -469,28 +469,27 @@ class RevolutionaryOCRSystem:
                         text_info = line[1]
                         text = text_info[0]
                         confidence = float(text_info[1])
-                        
                         # Преобразование bbox_points в (x, y, width, height)
-                        # bbox_points - это список из 4 точек [x1,y1], [x2,y2], [x3,y3], [x4,y4]
-                        # Находим минимальные и максимальные x и y
                         x_coords = [p[0] for p in bbox_points]
                         y_coords = [p[1] for p in bbox_points]
                         x = int(min(x_coords))
                         y = int(min(y_coords))
-                        width = int(max(x_coords) - x)
-                        height = int(max(y_coords) - y)
-                        bbox = (x, y, width, height)
-                        
+                        w = int(max(x_coords) - x)
+                        h = int(max(y_coords) - y)
+                        bbox = (x, y, w, h)
+
                         result = OCRResult(
                             text=text,
-                            confidence=confidence,
+                            confidence=confidence / 1.0,  # PaddleOCR возвращает уверенность от 0 до 1
                             bbox=bbox,
                             engine=OCREngine.PADDLEOCR,
                             language=self.detect_language(text),
                             processing_time=time.time() - start_time,
-                            metadata={}
-                        )
-                        results.append(result)             results.append(result)
+                            metadata={
+                                'raw_bbox_points': bbox_points,
+                                'raw_text_info': text_info
+                            }
+                                        results.append(result)
             
         except Exception as e:
             logger.error(f"Ошибка PaddleOCR: {e}")
@@ -507,54 +506,45 @@ class RevolutionaryOCRSystem:
         Returns:
             Список результатов распознавания
         """
-        if OCREngine.EASYOCR not in self.engines or not self.engines[OCREngine.EASYOCR]['initialized']:
+        if OCREngine.EASYOCR not in self.engines or not self.engines[OCREngine.EASYOCR]["initialized"]:
             return []
         
         start_time = time.time()
         results = []
         
         try:
-            easy_reader = self.engines[OCREngine.EASYOCR]['engine']
+            easy_reader = self.engines[OCREngine.EASYOCR]["engine"]
             
             # Распознавание
             ocr_results = easy_reader.readtext(image)
             
-            for result in ocr_results:
-                bbox_points = result[0]
-                text = result[1]
-                confidence = result[2]
+            for (bbox_points, text, confidence) in ocr_results:
+                # EasyOCR возвращает bbox как список 4 точек, нужно преобразовать в (x, y, w, h)
+                x_coords = [int(p[0]) for p in bbox_points]
+                y_coords = [int(p[1]) for p in bbox_points]
+                x = min(x_coords)
+                y = min(y_coords)
+                w = max(x_coords) - x
+                h = max(y_coords) - y
+                bbox = (x, y, w, h)
                 
-                # Преобразование координат
-                x_coords = [point[0] for point in bbox_points]
-                y_coords = [point[1] for point in bbox_points]
-                
-                bbox = (
-                    int(min(x_coords)),
-                    int(min(y_coords)),
-                    int(max(x_coords) - min(x_coords)),
-                    int(max(y_coords) - min(y_coords))
-                )
-                
-                ocr_result = OCRResult(
+                result = OCRResult(
                     text=text,
-                    confidence=confidence,
+                    confidence=float(confidence),  # EasyOCR возвращает уверенность от 0 до 1
                     bbox=bbox,
                     engine=OCREngine.EASYOCR,
                     language=self.detect_language(text),
                     processing_time=time.time() - start_time,
-                    metadata={'bbox_points': bbox_points}
+                    metadata={
+                        "raw_bbox_points": bbox_points
+                    }
                 )
-                
-                results.append(ocr_result)
+                results.append(result)
             
         except Exception as e:
             logger.error(f"Ошибка EasyOCR: {e}")
         
-        return results
-    
-    def consensus_ocr(self, image: np.ndarray) -> List[OCRResult]:
-        """
-        Консенсусное распознавание с использованием нескольких движков
+        return resultsнсенсусное распознавание с использованием нескольких движков
         
         Args:
             image: Изображение для распознавания
