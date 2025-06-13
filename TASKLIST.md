@@ -16,16 +16,16 @@
 
 День 2:
 
-[ ] Создать plugins/ocr/base.py и интерфейс BaseOCRPlugin
+[x] Создать plugins/ocr/base.py и интерфейс BaseOCRPlugin
 
-[ ] Перенести Tesseract-логику в plugins/ocr/tesseract_plugin.py
+[x] Перенести Tesseract-логику в plugins/ocr/tesseract_plugin.py
 
 
 День 3:
 
-[ ] Зарегистрировать Tesseract как дефолтный плагин
+[x] Зарегистрировать Tesseract как дефолтный плагин
 
-[ ] Добавить fallback на пустой плагин
+[x] Добавить fallback на пустой плагин
 
 
 День 4:

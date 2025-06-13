@@ -175,16 +175,18 @@ class UniversalTranslator:
         return text
 
     def recognize_from_image(self, image_path, lang_pair="en-ru", ocr_lang="eng+rus"):
-        # Импортируем функцию распознавания
-        from revolutionary_ocr import recognize_text
-        text = recognize_text(image_path, lang=ocr_lang)
-        cleaned_text = self.post_ocr_cleanup(text, lang_pair)
+        # Используем активный OCR-движок
+        cleaned_text = self.active_ocr.process_image(image_path)
+        cleaned_text = self.post_ocr_cleanup(cleaned_text, lang_pair)
         return cleaned_text
 
 
     def _load_ocr_plugins(self):
-        from plugins.ocr.tesseract_ocr import TesseractOCR
-        self.ocr_plugins = {"tesseract": TesseractOCR()}
+        from plugins.ocr.tesseract_plugin import TesseractOCRPlugin, NoOpOCRPlugin
+        self.ocr_plugins = {
+            "tesseract": TesseractOCRPlugin(),
+            "noop": NoOpOCRPlugin()
+        }
         # По умолчанию используется tesseract
         self.active_ocr = self.ocr_plugins["tesseract"]
 
@@ -192,5 +194,7 @@ class UniversalTranslator:
         if name in self.ocr_plugins:
             self.active_ocr = self.ocr_plugins[name]
         else:
-            print(f"OCR-движок '{name}' не найден.")
+            print(f"OCR-движок '{name}' не найден. Используется fallback (NoOpOCRPlugin).")
+            self.active_ocr = self.ocr_plugins["noop"]
+
 
