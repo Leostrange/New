@@ -2,6 +2,7 @@ import argparse
 import os
 from universal_translator import UniversalTranslator
 from download_model import download_models
+from epub_reader import display_first_epub_page
 
 def main():
     parser = argparse.ArgumentParser(description="Mr.Comic CLI tool")
@@ -15,6 +16,10 @@ def main():
     translate_parser.add_argument("--model", type=str, default="fallback", help="Translation model to use (e.g., small100, fallback)")
     translate_parser.add_argument("--output", type=str, help="Output file to save translated text")
     translate_parser.add_argument("--dry-run", action="store_true", help="Perform a dry run without actual translation")
+
+    # EPUB command
+    epub_parser = subparsers.add_parser("epub", help="Display the first page of an EPUB file")
+    epub_parser.add_argument("file", type=str, help="Path to the EPUB file")
 
     args = parser.parse_args()
 
@@ -46,6 +51,9 @@ def main():
         else:
             print("\n--- Translated Text ---")
             print(translated_text)
+
+    elif args.command == "epub":
+        display_first_epub_page(args.file)
 
 if __name__ == "__main__":
     main()
