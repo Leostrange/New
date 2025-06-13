@@ -30,16 +30,16 @@
 
 День 4:
 
-[ ] Создать local-translation-models/ структуру
+[x] Создать local-translation-models/ структуру
 
-[ ] Написать download_model.py (скачивание small100.onnx + sentencepiece)
+[x] Написать download_model.py (скачивание small100.onnx + sentencepiece)
 
 
 День 5:
 
-[ ] Обработка ошибок загрузки модели, логирование
+[x] Обработка ошибок загрузки модели, логирование
 
-[ ] CLI команда mrcomic translate <image> с прогрессом
+[x] CLI команда mrcomic translate <image> с прогрессом
 
 
 День 6:
