@@ -41,14 +41,19 @@ class UniversalTranslator:
                     print(f"Ошибка при загрузке словаря {fname}: {e}")
 
     def _initialize_engines(self):
-        # Временно отключаем загрузку тяжелой модели
-        # self._init_small100()
         self._load_dictionaries()
         self._load_ocr_plugins()
         
-        # Устанавливаем модель как недоступную
+        # Устанавливаем модель small100 как недоступную по умолчанию
         self.small100_session = None
         self.small100_tokenizer = None
+        
+        # Устанавливаем активную модель перевода по умолчанию на fallback
+        self.translation_models = {
+            "small100": self._translate_small100,
+            "fallback": self._fallback_translation
+        }
+        self.active_translation_model = self.translation_models["fallback"]
         # print("Инициализация завершена (модель small100 отключена для экономии памяти)")
 
 
@@ -199,5 +204,16 @@ class UniversalTranslator:
             # print(f"OCR-движок \'{name}\' не найден. Используется fallback (NoOpOCRPlugin).")
             self.active_ocr = self.ocr_plugins["noop"]
 
+    def set_translation_model(self, model_name: str):
+        if model_name in self.translation_models:
+            self.active_translation_model = self.translation_models[model_name]
+            if model_name == "small100":
+                self._init_small100() # Initialize small100 only when selected
+        else:
+            print(f"Модель перевода \'{model_name}\' не найдена. Используется fallback.")
+            self.active_translation_model = self.translation_models["fallback"]
+
+    def translate(self, text: str, lang_pair: str = "en-ru") -> str:
+        return self.active_translation_model(text, lang_pair)
 
 

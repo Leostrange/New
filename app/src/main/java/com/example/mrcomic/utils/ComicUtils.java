@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -38,7 +39,18 @@ public class ComicUtils {
         } else {
             throw new IllegalArgumentException("Unsupported comic file format: " + fileExtension);
         }
-        Collections.sort(imagePaths);
+        // Sort numerically
+        Collections.sort(imagePaths, new Comparator<String>() {
+            @Override
+            public int compare(String s1, String s2) {
+                return extractInt(s1) - extractInt(s2);
+            }
+
+            int extractInt(String s) {
+                String num = s.replaceAll("[^\\d]", "");
+                return num.isEmpty() ? 0 : Integer.parseInt(num);
+            }
+        });
         return imagePaths;
     }
 
@@ -49,16 +61,20 @@ public class ComicUtils {
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
                 if (!entry.isDirectory() && isImageFile(entry.getName())) {
-                    String filePath = destinationDirectory + File.separator + new File(entry.getName()).getName();
+                    // Handle nested directories by preserving path structure
+                    String entryName = entry.getName();
+                    File newFile = new File(destinationDirectory, entryName);
+                    new File(newFile.getParent()).mkdirs(); // Create parent directories if they don't exist
+
                     try (InputStream inputStream = zipFile.getInputStream(entry);
-                         FileOutputStream outputStream = new FileOutputStream(filePath)) {
+                         FileOutputStream outputStream = new FileOutputStream(newFile)) {
                         byte[] buffer = new byte[1024];
                         int len;
                         while ((len = inputStream.read(buffer)) > 0) {
                             outputStream.write(buffer, 0, len);
                         }
                     }
-                    imagePaths.add(filePath);
+                    imagePaths.add(newFile.getAbsolutePath());
                 }
             }
         }
@@ -71,11 +87,15 @@ public class ComicUtils {
             FileHeader header = archive.nextFileHeader();
             while (header != null) {
                 if (!header.isDirectory() && isImageFile(header.getFileNameString())) {
-                    String filePath = destinationDirectory + File.separator + new File(header.getFileNameString()).getName();
-                    try (FileOutputStream outputStream = new FileOutputStream(filePath)) {
+                    // Handle nested directories by preserving path structure
+                    String entryName = header.getFileNameString();
+                    File newFile = new File(destinationDirectory, entryName);
+                    new File(newFile.getParent()).mkdirs(); // Create parent directories if they don't exist
+
+                    try (FileOutputStream outputStream = new FileOutputStream(newFile)) {
                         archive.extractFile(header, outputStream);
                     }
-                    imagePaths.add(filePath);
+                    imagePaths.add(newFile.getAbsolutePath());
                 }
                 header = archive.nextFileHeader();
             }

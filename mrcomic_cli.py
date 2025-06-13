@@ -12,6 +12,8 @@ def main():
     translate_parser.add_argument("image", type=str, help="Path to the image file")
     translate_parser.add_argument("--lang-pair", type=str, default="en-ru", help="Language pair for translation (e.g., en-ru)")
     translate_parser.add_argument("--ocr-lang", type=str, default="eng+rus", help="OCR language(s) (e.g., eng+rus)")
+    translate_parser.add_argument("--model", type=str, default="fallback", help="Translation model to use (e.g., small100, fallback)")
+    translate_parser.add_argument("--output", type=str, help="Output file to save translated text")
 
     args = parser.parse_args()
 
@@ -24,10 +26,19 @@ def main():
         download_models()
 
         translator = UniversalTranslator()
+        # Set the translation model based on the --model argument
+        translator.set_translation_model(args.model)
+
         print(f"Translating text from {args.image}...")
         translated_text = translator.recognize_from_image(args.image, args.lang_pair, args.ocr_lang)
-        print("\n--- Translated Text ---")
-        print(translated_text)
+        
+        if args.output:
+            with open(args.output, "w", encoding="utf-8") as f:
+                f.write(translated_text)
+            print(f"Translated text saved to {args.output}")
+        else:
+            print("\n--- Translated Text ---")
+            print(translated_text)
 
 if __name__ == "__main__":
     main()
