@@ -65,7 +65,7 @@
 
 [x] EPUB: подключить epublib, отобразить первую страницу в CLI
 
-[ ] Создать класс EpubReader.kt
+[x] Создать класс EpubReader.kt
 
 
 День 9:
