@@ -72,7 +72,7 @@
 
 [x] Поддержка защищённых PDF (пароль + fallback)
 
-[ ] Добавить в Android PdfRenderer с обработкой паролей
+[x] Добавить в Android PdfRenderer с обработкой паролей
 
 
 День 10:
