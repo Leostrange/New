@@ -85,31 +85,114 @@ class ArchiveExtractor(private val context: Context) {
     }
 
     /**
-     * Извлечение из RAR/CBR архивов (базовая реализация)
-     * Примечание: Для полной поддержки RAR требуется нативная библиотека
+     * Извлечение из RAR/CBR архивов с использованием junrar
      */
     private fun extractFromRar(archiveFile: File): List<ExtractedImage> {
-        Log.w(TAG, "RAR extraction not fully implemented - requires native library")
-        // TODO: Интегрировать библиотеку для RAR (например, junrar)
-        return emptyList()
+        val images = mutableListOf<ExtractedImage>()
+        
+        try {
+            val archive = com.github.junrar.Archive(archiveFile)
+            
+            for (fileHeader in archive.fileHeaders) {
+                if (!fileHeader.isDirectory && isImageFile(fileHeader.fileName)) {
+                    val outputStream = ByteArrayOutputStream()
+                    archive.extractFile(fileHeader, outputStream)
+                    
+                    val imageData = outputStream.toByteArray()
+                    val extractedImage = ExtractedImage(
+                        name = getFileName(fileHeader.fileName),
+                        path = fileHeader.fileName,
+                        data = imageData,
+                        size = imageData.size.toLong()
+                    )
+                    images.add(extractedImage)
+                    Log.d(TAG, "Extracted RAR image: ${extractedImage.name} (${extractedImage.size} bytes)")
+                }
+            }
+            
+            archive.close()
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error extracting RAR archive: ${archiveFile.name}", e)
+        }
+        
+        return sortImages(images)
     }
 
     /**
-     * Извлечение из 7z/CB7 архивов (базовая реализация)
+     * Извлечение из 7z/CB7 архивов с использованием Apache Commons Compress
      */
     private fun extractFrom7z(archiveFile: File): List<ExtractedImage> {
-        Log.w(TAG, "7z extraction not fully implemented - requires native library")
-        // TODO: Интегрировать библиотеку для 7z (например, Apache Commons Compress)
-        return emptyList()
+        val images = mutableListOf<ExtractedImage>()
+        
+        try {
+            val sevenZFile = org.apache.commons.compress.archivers.sevenz.SevenZFile(archiveFile)
+            
+            var entry: org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry?
+            while (sevenZFile.nextEntry.also { entry = it } != null) {
+                val archiveEntry = entry!!
+                
+                if (!archiveEntry.isDirectory && isImageFile(archiveEntry.name)) {
+                    val content = ByteArray(archiveEntry.size.toInt())
+                    sevenZFile.read(content)
+                    
+                    val extractedImage = ExtractedImage(
+                        name = getFileName(archiveEntry.name),
+                        path = archiveEntry.name,
+                        data = content,
+                        size = content.size.toLong()
+                    )
+                    images.add(extractedImage)
+                    Log.d(TAG, "Extracted 7z image: ${extractedImage.name} (${extractedImage.size} bytes)")
+                }
+            }
+            
+            sevenZFile.close()
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error extracting 7z archive: ${archiveFile.name}", e)
+        }
+        
+        return sortImages(images)
     }
 
     /**
-     * Извлечение из TAR/CBT архивов (базовая реализация)
+     * Извлечение из TAR/CBT архивов с использованием Apache Commons Compress
      */
     private fun extractFromTar(archiveFile: File): List<ExtractedImage> {
-        Log.w(TAG, "TAR extraction not fully implemented")
-        // TODO: Реализовать TAR экстрактор
-        return emptyList()
+        val images = mutableListOf<ExtractedImage>()
+        
+        try {
+            val inputStream = FileInputStream(archiveFile)
+            val tarInputStream = org.apache.commons.compress.archivers.tar.TarArchiveInputStream(inputStream)
+            
+            var entry: org.apache.commons.compress.archivers.tar.TarArchiveEntry?
+            while (tarInputStream.nextTarEntry.also { entry = it } != null) {
+                val tarEntry = entry!!
+                
+                if (!tarEntry.isDirectory && isImageFile(tarEntry.name)) {
+                    val content = ByteArray(tarEntry.size.toInt())
+                    tarInputStream.read(content)
+                    
+                    val extractedImage = ExtractedImage(
+                        name = getFileName(tarEntry.name),
+                        path = tarEntry.name,
+                        data = content,
+                        size = content.size.toLong()
+                    )
+                    images.add(extractedImage)
+                    Log.d(TAG, "Extracted TAR image: ${extractedImage.name} (${extractedImage.size} bytes)")
+                }
+            }
+            
+            tarInputStream.close()
+            inputStream.close()
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "Error extracting TAR archive: ${archiveFile.name}", e)
+        }
+        
+        return sortImages(images)
     }
 
     /**
