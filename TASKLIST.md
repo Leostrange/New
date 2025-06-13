@@ -11,7 +11,7 @@
 
 [x] Создать dictionaries/ с шаблонами pre.json, ocr.json, post.json
 
-[ ] В universal_translator.py проверить загрузку и fallback
+[x] В universal_translator.py проверить загрузку и fallback
 
 
 День 2:
