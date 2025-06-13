@@ -14,12 +14,19 @@ def main():
     translate_parser.add_argument("--ocr-lang", type=str, default="eng+rus", help="OCR language(s) (e.g., eng+rus)")
     translate_parser.add_argument("--model", type=str, default="fallback", help="Translation model to use (e.g., small100, fallback)")
     translate_parser.add_argument("--output", type=str, help="Output file to save translated text")
+    translate_parser.add_argument("--dry-run", action="store_true", help="Perform a dry run without actual translation")
 
     args = parser.parse_args()
 
     if args.command == "translate":
         if not os.path.exists(args.image):
             print(f"Error: Image file not found at {args.image}")
+            return
+
+        if args.dry_run:
+            print(f"Dry run: Would translate text from {args.image} using model \'{args.model}\' for language pair \'{args.lang_pair}\' with OCR language \'{args.ocr_lang}\'.")
+            if args.output:
+                print(f"Dry run: Would save output to {args.output}.")
             return
 
         # Ensure models are downloaded before translation
