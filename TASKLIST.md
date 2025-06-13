@@ -44,9 +44,9 @@
 
 День 6:
 
-[ ] ComicUtils.java: распаковка CBZ/CBR → список изображений
+[x] ComicUtils.java: распаковка CBZ/CBR → список изображений
 
-[ ] Начальная версия ComicReaderActivity.kt (RecyclerView + Glide)
+[x] Начальная версия ComicReaderActivity.kt (RecyclerView + Glide)
 
 
 День 7:
