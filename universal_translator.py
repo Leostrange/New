@@ -1,18 +1,19 @@
 import onnxruntime as ort
 import sentencepiece as spm
 import json, os
+import re
 
 class UniversalTranslator:
     def __init__(self):
         self._initialize_engines()
 
     def _init_small100(self):
-        model_path = 'local-translation-models/model.onnx'
-        sp_path = 'local-translation-models/sentencepiece.bpe.model'
+        model_path = os.path.join(os.path.dirname(__file__), 'local-translation-models/model.onnx')
+        sp_path = os.path.join(os.path.dirname(__file__), 'local-translation-models/sentencepiece.bpe.model')
         
         # Проверяем наличие файлов модели
         if not os.path.exists(model_path) or not os.path.exists(sp_path):
-            print(f"Модель small100 не найдена в {model_path}")
+            # print(f"Модель small100 не найдена в {model_path}")
             self.small100_session = None
             self.small100_tokenizer = None
             return
@@ -21,19 +22,20 @@ class UniversalTranslator:
             self.small100_session = ort.InferenceSession(model_path)
             self.small100_tokenizer = spm.SentencePieceProcessor()
             self.small100_tokenizer.load(sp_path)
-            print("Модель small100 загружена успешно")
+            # print("Модель small100 загружена успешно")
         except Exception as e:
-            print(f"Ошибка загрузки модели small100: {e}")
+            # print(f"Ошибка загрузки модели small100: {e}")
             self.small100_session = None
             self.small100_tokenizer = None
 
     def _load_dictionaries(self):
         self.dictionaries = {}
-        for fname in os.listdir('dictionaries'):
-            if fname.endswith('.json'):
-                lang_pair = fname.replace('.json', '')
+        dictionaries_dir = os.path.join(os.path.dirname(__file__), 'dictionaries')
+        for fname in os.listdir(dictionaries_dir):
+            if fname.endswith(".json"):
+                lang_pair = fname.replace(".json", "")
                 try:
-                    with open(f'dictionaries/{fname}', 'r', encoding='utf-8') as f:
+                    with open(os.path.join(dictionaries_dir, fname), "r", encoding="utf-8") as f:
                         self.dictionaries[lang_pair] = json.load(f)
                 except Exception as e:
                     print(f"Ошибка при загрузке словаря {fname}: {e}")
@@ -47,7 +49,7 @@ class UniversalTranslator:
         # Устанавливаем модель как недоступную
         self.small100_session = None
         self.small100_tokenizer = None
-        print("Инициализация завершена (модель small100 отключена для экономии памяти)")
+        # print("Инициализация завершена (модель small100 отключена для экономии памяти)")
 
 
 
@@ -57,12 +59,12 @@ class UniversalTranslator:
             return "[Empty input]"
         
         # Применяем предварительный словарь
-        if hasattr(self, 'dictionaries') and lang_pair in self.dictionaries:
+        if hasattr(self, "dictionaries") and lang_pair in self.dictionaries:
             text = self._apply_pre_dictionary(text, lang_pair)
         
         # Проверяем, загружена ли модель
         if self.small100_session is None or self.small100_tokenizer is None:
-            print("Модель small100 недоступна, используется fallback перевод")
+            # print("Модель small100 недоступна, используется fallback перевод")
             return self._fallback_translation(text, lang_pair)
         
         try:
@@ -119,11 +121,11 @@ class UniversalTranslator:
                 
         except Exception as e:
             # Если модель не работает, используем fallback
-            print(f"ONNX model error: {e}, using fallback translation")
+            # print(f"ONNX model error: {e}, using fallback translation")
             return self._fallback_translation(text, lang_pair)
         
         # Применяем постобработку словарем
-        if hasattr(self, 'dictionaries') and lang_pair in self.dictionaries:
+        if hasattr(self, "dictionaries") and lang_pair in self.dictionaries:
             decoded = self._apply_post_dictionary(decoded, lang_pair)
             
         return decoded
@@ -143,12 +145,12 @@ class UniversalTranslator:
             "text": "текст"
         }
         
-        result = text.lower()
+        result = text
         for en, ru in simple_translations.items():
-            result = result.replace(en, ru)
+            result = re.sub(r'\b' + re.escape(en) + r'\b', ru, result, flags=re.IGNORECASE)
         
         # Применяем постобработку словарем
-        if hasattr(self, 'dictionaries') and lang_pair in self.dictionaries:
+        if hasattr(self, "dictionaries") and lang_pair in self.dictionaries:
             result = self._apply_post_dictionary(result, lang_pair)
             
         return result
@@ -162,16 +164,16 @@ class UniversalTranslator:
     def _apply_post_dictionary(self, text: str, lang_pair: str) -> str:
         mapping = self.dictionaries.get(lang_pair, {})
         for src, tgt in mapping.get("post", {}).items():
-            text = text.replace(src, tgt)
+            text = re.sub(src, tgt, text)
         return text
 
 
 
     def post_ocr_cleanup(self, text: str, lang_pair: str) -> str:
-        if hasattr(self, 'dictionaries'):
+        if hasattr(self, "dictionaries"):
             mapping = self.dictionaries.get(lang_pair, {})
             for src, tgt in mapping.get("ocr", {}).items():
-                text = text.replace(src, tgt)
+                text = re.sub(src, tgt, text)
         return text
 
     def recognize_from_image(self, image_path, lang_pair="en-ru", ocr_lang="eng+rus"):
@@ -194,7 +196,8 @@ class UniversalTranslator:
         if name in self.ocr_plugins:
             self.active_ocr = self.ocr_plugins[name]
         else:
-            print(f"OCR-движок '{name}' не найден. Используется fallback (NoOpOCRPlugin).")
+            # print(f"OCR-движок \'{name}\' не найден. Используется fallback (NoOpOCRPlugin).")
             self.active_ocr = self.ocr_plugins["noop"]
+
 
 

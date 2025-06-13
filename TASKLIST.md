@@ -51,9 +51,9 @@
 
 День 7:
 
-[ ] Юнит-тесты на OCR, словари и fallback
+[x] Юнит-тесты на OCR, словари и fallback
 
-[ ] Интеграционный тест end-to-end OCR→Translate→CLI
+[x] Интеграционный тест end-to-end OCR→Translate→CLI
 
 
 
