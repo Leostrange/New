@@ -84,9 +84,9 @@
 
 День 11:
 
-[ ] Поддержка WebP/AVIF/HEIC через ImageDecoder
+[x] Поддержка WebP/AVIF/HEIC через ImageDecoder
 
-[ ] CLI показать метаданные формата
+[x] CLI показать метаданные формата
 
 
 День 12:
