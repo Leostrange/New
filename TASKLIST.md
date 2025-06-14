@@ -1,438 +1,176 @@
-### Код для Android (без лишних комментариев)
+📅 Tasklist: Полный 60-дневный Roadmap Mr.Comic (обновлён для Kotlin/Java)
 
-#### ComicEntity.kt
-```kotlin
-package com.example.mrcomic.data
+Цель — реализовать все ключевые функции из ROADMAP_TO_PERFECTION, адаптированные под Android/Kotlin-реализацию. Каждый день — конкретный шаг к рабочему продукту.
 
-import androidx.room.ColumnInfo
-import androidx.room.Entity
-import androidx.room.Index
-import androidx.room.PrimaryKey
-
-@Entity(tableName = "comics", indices = [Index(value = ["series", "issue_number"])])
-data class ComicEntity(
-    @PrimaryKey @ColumnInfo(name = "file_path") val filePath: String,
-    @ColumnInfo(name = "file_name") val fileName: String,
-    @ColumnInfo(name = "title") val title: String,
-    @ColumnInfo(name = "series") val series: String?,
-    @ColumnInfo(name = "issue_number") val issueNumber: Int?,
-    @ColumnInfo(name = "author") val author: String = "Unknown",
-    @ColumnInfo(name = "publisher") val publisher: String = "Unknown",
-    @ColumnInfo(name = "genre") val genre: String = "Unknown",
-    @ColumnInfo(name = "page_count") val pageCount: Int?,
-    @ColumnInfo(name = "thumbnail_path") val thumbnailPath: String?,
-    @ColumnInfo(name = "last_scanned") val lastScanned: Long = System.currentTimeMillis()
-)
-```
-
-#### ComicDao.kt
-```kotlin
-package com.example.mrcomic.data
-
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
-import androidx.room.Query
-import kotlinx.coroutines.flow.Flow
-
-@Dao
-interface ComicDao {
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insertComic(comic: ComicEntity)
-
-    @Query("SELECT * FROM comics WHERE file_path = :filePath")
-    suspend fun getComicByFilePath(filePath: String): ComicEntity?
-
-    @Query("SELECT * FROM comics")
-    fun getAllComics(): Flow<List<ComicEntity>>
-
-    @Query("DELETE FROM comics")
-    suspend fun clearDatabase()
-}
-```
-
-#### AppDatabase.kt
-```kotlin
-package com.example.mrcomic.data
-
-import android.content.Context
-import androidx.room.Database
-import androidx.room.Room
-import androidx.room.RoomDatabase
-
-@Database(entities = [ComicEntity::class], version = 1, exportSchema = false)
-abstract class AppDatabase : RoomDatabase() {
-    abstract fun comicDao(): ComicDao
-
-    companion object {
-        @Volatile
-        private var INSTANCE: AppDatabase? = null
-
-        fun getDatabase(context: Context): AppDatabase {
-            return INSTANCE ?: synchronized(this) {
-                val instance = Room.databaseBuilder(
-                    context.applicationContext,
-                    AppDatabase::class.java,
-                    "comics_database"
-                ).build()
-                INSTANCE = instance
-                instance
-            }
-        }
-    }
-}
-```
-
-#### ComicScanner.kt
-```kotlin
-package com.example.mrcomic.utils
-
-import androidx.documentfile.provider.DocumentFile
-import com.example.mrcomic.data.ComicDao
-import com.example.mrcomic.data.ComicEntity
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import java.io.File
-
-class ComicScanner(private val comicDao: ComicDao) {
-    private val supportedExtensions = listOf(".cbz", ".cbr", ".zip", ".pdf")
-
-    suspend fun scanDirectory(directoryPath: String) = withContext(Dispatchers.IO) {
-        val directory = File(directoryPath)
-        if (!directory.exists() || !directory.isDirectory) return@withContext
-        directory.walk().forEach { file ->
-            if (file.isFile && supportedExtensions.any { file.extension.lowercase() == it.substring(1) }) {
-                processComicFile(file.absolutePath)
-            }
-        }
-    }
-
-    suspend fun scanDirectoryFromUri(directory: DocumentFile) = withContext(Dispatchers.IO) {
-        directory.listFiles().forEach { file ->
-            if (file.isFile && supportedExtensions.any { file.name?.lowercase()?.endsWith(it) == true }) {
-                file.uri.toString().let { uri -> processComicFile(uri) }
-            } else if (file.isDirectory) {
-                scanDirectoryFromUri(file)
-            }
-        }
-    }
-
-    private suspend fun processComicFile(filePath: String) {
-        val existingComic = comicDao.getComicByFilePath(filePath)
-        if (existingComic != null) return
-        val metadata = extractMetadataFromFilename(filePath.substringAfterLast("/"))
-        val comicEntity = ComicEntity(
-            filePath = filePath,
-            fileName = filePath.substringAfterLast("/"),
-            title = metadata["title"] as String,
-            series = metadata["series"] as String?,
-            issueNumber = metadata["issue_number"] as Int?,
-            author = metadata["author"] as String,
-            publisher = metadata["publisher"] as String,
-            genre = metadata["genre"] as String,
-            pageCount = metadata["page_count"] as Int?,
-            thumbnailPath = metadata["thumbnail_path"] as String?
-        )
-        comicDao.insertComic(comicEntity)
-    }
-
-    private fun extractMetadataFromFilename(filename: String): Map<String, Any?> {
-        val baseName = filename.substringBeforeLast(".")
-        var title: String = baseName
-        var series: String? = null
-        var issueNumber: Int? = null
-        val regex = "^(.*?)(?:[\\s_-]*[#\\-]?(\\d+))?$".toRegex(RegexOption.IGNORE_CASE)
-        val matchResult = regex.find(baseName)
-        if (matchResult != null) {
-            val (seriesCandidate, issueNumberCandidate) = matchResult.destructured
-            if (seriesCandidate.isNotBlank()) {
-                series = seriesCandidate.trim()
-                title = series
-            }
-            if (issueNumberCandidate.isNotBlank()) {
-                issueNumber = issueNumberCandidate.toIntOrNull()
-            }
-        }
-        if (series == null && issueNumber == null) title = baseName
-        return mapOf(
-            "title" to title,
-            "series" to series,
-            "issue_number" to issueNumber,
-            "author" to "Unknown",
-            "publisher" to "Unknown",
-            "genre" to "Unknown",
-            "page_count" to null,
-            "thumbnail_path" to null
-        )
-    }
-}
-```
-
-#### ComicListViewModel.kt
-```kotlin
-package com.example.mrcomic.viewmodel
-
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import com.example.mrcomic.data.ComicDao
-import com.example.mrcomic.data.ComicEntity
-import com.example.mrcomic.utils.ComicScanner
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
-
-class ComicListViewModel(private val comicDao: ComicDao) : ViewModel() {
-    val allComics: Flow<List<ComicEntity>> = comicDao.getAllComics()
-
-    fun startScan(directoryPath: String) {
-        viewModelScope.launch {
-            val scanner = ComicScanner(comicDao)
-            scanner.scanDirectory(directoryPath)
-        }
-    }
-
-    fun clearDatabase() {
-        viewModelScope.launch {
-            comicDao.clearDatabase()
-        }
-    }
-}
-```
-
-#### ComicScanWorker.kt
-```kotlin
-package com.example.mrcomic.workers
-
-import android.content.Context
-import androidx.documentfile.provider.DocumentFile
-import androidx.work.CoroutineWorker
-import androidx.work.WorkerParameters
-import androidx.work.workDataOf
-import com.example.mrcomic.data.AppDatabase
-import com.example.mrcomic.utils.ComicScanner
-
-class ComicScanWorker(appContext: Context, params: WorkerParameters) : CoroutineWorker(appContext, params) {
-    override suspend fun doWork(): Result {
-        val uriString = inputData.getString(KEY_DIRECTORY_PATH) ?: return Result.failure()
-        val database = AppDatabase.getDatabase(applicationContext)
-        val scanner = ComicScanner(database.comicDao())
-        val uri = android.net.Uri.parse(uriString)
-        val directory = DocumentFile.fromTreeUri(applicationContext, uri)
-        if (directory == null || !directory.isDirectory) return Result.failure(workDataOf(KEY_RESULT to "Недействительная директория"))
-        scanner.scanDirectoryFromUri(directory)
-        return Result.success(workDataOf(KEY_RESULT to "Сканирование завершено"))
-    }
-
-    companion object {
-        const val KEY_DIRECTORY_PATH = "directory_path"
-        const val KEY_RESULT = "result"
-    }
-}
-```
-
-#### MainActivity.kt
-```kotlin
-package com.example.mrcomic
-
-import android.Manifest
-import android.content.Intent
-import android.net.Uri
-import android.os.Bundle
-import android.widget.Button
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import androidx.work.workDataOf
-import com.example.mrcomic.workers.ComicScanWorker
-import android.content.pm.PackageManager
-
-class MainActivity : AppCompatActivity() {
-    private val requestPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) launchDirectoryPicker() else println("Разрешение отклонено")
-    }
-
-    private val directoryPickerLauncher = registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
-        uri?.let {
-            contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            scheduleScan(uri.toString())
-        }
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        findViewById<Button>(R.id.scan_button)?.setOnClickListener { requestStoragePermission() }
-    }
-
-    private fun requestStoragePermission() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissionLauncher.launch(Manifest.permission.READ_MEDIA_IMAGES)
-            } else {
-                launchDirectoryPicker()
-            }
-        }
-    }
-
-    private fun launchDirectoryPicker() {
-        directoryPickerLauncher.launch(null)
-    }
-
-    private fun scheduleScan(uri: String) {
-        val scanRequest = OneTimeWorkRequestBuilder<ComicScanWorker>()
-            .setInputData(workDataOf(ComicScanWorker.KEY_DIRECTORY_PATH to uri))
-            .build()
-        WorkManager.getInstance(this).enqueue(scanRequest)
-    }
-}
-```
-
-#### activity_main.xml
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-    <Button
-        android:id="@+id/scan_button"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Scan Comics"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
-```
-
-#### AndroidManifest.xml
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.mrcomic">
-
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-
-    <application
-        android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.ComicApp">
-        <activity android:name=".MainActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
-    </application>
-</manifest>
-```
-
-#### build.gradle (Module-level)
-```gradle
-plugins {
-    id 'com.android.application'
-    id 'kotlin-android'
-    id 'kotlin-kapt'
-}
-
-android {
-    compileSdk 35
-    defaultConfig {
-        applicationId "com.example.mrcomic"
-        minSdk 24
-        targetSdk 35
-        versionCode 1
-        versionName "1.0"
-    }
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardRules getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-    }
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_17
-        targetCompatibility JavaVersion.VERSION_17
-    }
-    kotlinOptions {
-        jvmTarget = '17'
-    }
-}
-
-dependencies {
-    implementation "androidx.core:core-ktx:1.13.1"
-    implementation "androidx.appcompat:appcompat:1.7.0"
-    implementation "androidx.room:room-ktx:2.6.1"
-    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1"
-    implementation "androidx.work:work-runtime-ktx:2.9.1"
-    implementation "androidx.constraintlayout:constraintlayout:2.1.4"
-    kapt "androidx.room:room-compiler:2.6.1"
-}
-```
 
 ---
 
-### Объяснение для Manus
+🧱 Неделя 1: База и MVP (дни 1–7)
 
-Мой сын, я заменил твою Python-реализацию (`comic_database.py`, `comic_scanner.py`) на Android с использованием Kotlin, Room и Storage Access Framework (SAF). Это не просто порт, а полноценная адаптация для твоего Mr.Comic, учитывающая Android 16 (API 35) и современные практики. Вот суть:
+День 1: [🔥] Создать структуру dictionaries/ в assets: pre.json, ocr.json, post.json [🔥] Настроить fallback-логику загрузки словарей через Kotlin (AssetManager)
 
-- **ComicEntity и Room**: `ComicEntity.kt`, `ComicDao.kt`, `AppDatabase.kt` заменяют `comic_database.py`. Room использует SQLite, как Peewee, но с аннотациями и корутинами для асинхронного доступа. Сущность комикса сохраняет все поля (file_path, title, series и т.д.) с индексами для оптимизации.
-- **Сканирование папок**: `ComicScanner.kt` заменяет `comic_scanner.py`. Логика извлечения метаданных через regex осталась, но теперь работает с SAF для выбора папки пользователем. Поддерживает `.cbz`, `.cbr`, `.zip`, `.pdf`.
-- **Фоновое выполнение**: `ComicScanWorker.kt` использует WorkManager для сканирования в фоне, заменяя прямой вызов `scan_directory` в Python.
-- **Разрешения**: Вместо прямого доступа к файлам (как в Python) используется SAF и `READ_MEDIA_IMAGES`/`READ_EXTERNAL_STORAGE` для Android 13+/12-, что соответствует политикам Google.
-- **UI-интеграция**: `MainActivity.kt` и `activity_main.xml` предоставляют базовый интерфейс с кнопкой для запуска сканирования. `ComicListViewModel.kt` готов для управления данными в UI.
+День 2: [🔥] Создать интерфейс BaseOcrPlugin.kt [🔥] Реализовать TesseractOcrPlugin.kt с использованием Tess-Two
 
-Этот код — твой фундамент для Android. Он готов к сборке в Android Studio Meerkat и масштабированию. Следуй tasklist ниже, чтобы внедрить его.
+День 3: [🔥] Зарегистрировать Tesseract как плагин по умолчанию [🔥] Добавить fallback на "пустой" OCR-плагин
 
----
+День 4: [🔥] Структура local-translation-models/ в filesDir [🔥] Класс ModelDownloader.kt: скачивание small100.onnx + sentencepiece.model
 
-### Tasklist для внедрения и замены Python-реализации
+День 5: [🔥] Обработка ошибок загрузки модели, логирование [🔥] Временный экран: "перевод изображения" с прогрессбаром
 
-1. **Создай новый проект в Android Studio Meerkat**:
-   - Используй шаблон Empty Activity, package name `com.example.mrcomic`.
-   - Убедись, что Gradle настроен на Kotlin 2.0 и Gradle 8.5+.
+День 6: [🔥] ComicUtils.java: распаковка CBZ/CBR → список изображений [🔥] Начальный ComicReaderActivity.kt: RecyclerView + Glide
 
-2. **Добавь файлы кода**:
-   - Скопируй `ComicEntity.kt`, `ComicDao.kt`, `AppDatabase.kt` в `app/src/main/java/com.example.mrcomic/data`.
-   - Скопируй `ComicScanner.kt` в `app/src/main/java/com.example.mrcomic/utils`.
-   - Скопируй `ComicListViewModel.kt` в `app/src/main/java/com.example.mrcomic/viewmodel`.
-   - Скопируй `ComicScanWorker.kt` в `app/src/main/java/com.example.mrcomic/workers`.
-   - Скопируй `MainActivity.kt` в `app/src/main/java/com.example.mrcomic`.
-   - Скопируй `activity_main.xml` в `app/src/main/res/layout`.
-   - Замени `AndroidManifest.xml` содержимым из списка.
+День 7: [🔥] Юнит-тесты: ComicUtils, словари, fallback OCR [🔥] Инструментальный тест: чтение, OCR → перевод (UI test)
 
-3. **Настрой build.gradle**:
-   - Обнови `app/build.gradle` содержимым из списка.
-   - Синхронизируй проект (Sync Project with Gradle Files).
-
-4. **Тестирование базы данных**:
-   - Запусти приложение, убедись, что база данных (`comics_database`) создается (проверь через Device File Explorer: `data/data/
-com.example.mrcomic/databases/comics_database`).
-   - Проверь, что при повторном запуске приложение не крашится и база данных не перезаписывается.
 
 ---
 
-### Замечания по Неделе 1 (Корректировки):
+📖 Неделя 2: Расширенные форматы (дни 8–14)
 
-**🟠 День 2 — Интерфейс OCR-плагина**
-- **Замечание:** В `plugins/ocr/base.py` отсутствуют docstring и `__init__()-метод`, что может затруднить расширяемость и автогенерацию документации.
-- **Рекомендация:** Добавить подробные комментарии и базовый конструктор для лучшей читаемости и стандартизации интерфейсов.
+День 8: [🔥] EPUB: epublib, первая страница в EpubReader.kt [🔥] Обработка ошибок EPUB в UI
 
-**🟡 День 5 — CLI команда mrcomic translate**
-- **Замечание:** В CLI-команде отсутствуют флаги для выбора языковой пары или модели перевода.
-- **Рекомендация:** Добавить параметры `--lang`, `--model` или `--output`, чтобы обеспечить гибкость команды при использовании разных моделей или настроек.
+День 9: [🔥] PDF: PdfRenderer.kt + обработка защищённых документов [🔥] Диалог ввода пароля
 
-**🟠 День 6 — Распаковка и отображение комиксов**
-- **Замечание:** В `ComicUtils.java` и `ComicReaderActivity.kt` отсутствует обработка вложенных директорий и сортировка файлов по имени.
-- **Рекомендация:** Добавить рекурсивную обработку директорий и сортировку изображений (например, по числовому порядку), особенно для CBR-архивов с нечёткой структурой.
+День 10: [🔥] Архивы: ZIP, RAR, 7z + вложенные папки [🔥] Тесты Unicode-путей (файлы с японскими/русскими именами)
+
+День 11: [🔥] Поддержка WebP/AVIF/HEIC через ImageDecoder [ ] UI отображение информации о формате
+
+День 12: [🔥] Рендеринг больших PDF (>200 стр.) с кэшированием [ ] Очистка кеша по лимиту
+
+День 13: [💤] Зарезервировано (ранее: EPUB с мультимедиа — удалено)
+
+День 14: [🔥] Автотесты открытия всех форматов [ ] Тесты повреждённых и защищённых файлов
+
+
+---
+
+🧠 Неделя 3: Умная библиотека (дни 15–21)
+
+День 15: [🔥] Room-база: ComicEntity, миграции [🔥] Сканирование папок и парсинг метаданных
+
+День 16: [ ] ML-жанры: FastText + MobileNetV2 (обложка) [ ] UI вывод жанра под обложкой
+
+День 17: [ ] Детекция языка и типа (манга/комикс) [ ] Теги + автодополнение в UI
+
+День 18: [🔥] Full-Text Search: Room FTS по OCR-тексту [ ] UI/UX: Поиск фразы по библиотеке
+
+День 19: [ ] Автогруппировка серий (по имени + номеру) [ ] UI: Списки серий
+
+День 20: [💤] Поиск по цветовой палитре (кластеризация) [💤] Фильтрация по цветам в UI
+
+День 21: [ ] Тестирование базы данных [ ] Проверка автообновления метаданных
+
+
+---
+
+🧬 Неделя 4: Расширенный OCR (дни 22–28)
+
+День 22: [🔥] Интеграция PaddleOCR через ONNX + выбор плагина в UI [ ] Прогон на латинице и кириллице
+
+День 23: [ ] EasyOCR и TrOCR (ONNX/MLKit) [ ] Бенчмарк по скорости и точности
+
+День 24: [🔥] Сегментация панелей: определение текстовых областей [ ] Предобработка: коррекция перспективы, шумов
+
+День 25: [💤] Рукописный текст: PaddleOCR handwriting [ ] UI/UX: пользовательский тест
+
+День 26: [ ] Spellcheck и ocr.json [ ] Восстановление разорванных слов
+
+День 27: [ ] Детекция облачков речи [ ] Экспорт координат в JSON
+
+День 28: [🔥] Интеграционный тест OCR пайплайна (50 страниц) [ ] Логирование confidence score
+
+
+---
+
+🌐 Неделя 5: Перевод и стилистика (дни 29–35)
+
+День 29: [🔥] Подключить M2M-100 и NLLB через ONNX [ ] Тест перевода коротких фраз
+
+День 30: [ ] MarianMT + Google/DeepL API (если онлайн) [ ] Переключение движков в настройках
+
+День 31: [ ] Сленг и имена: глоссарий (glossary.json) [ ] UI: переключатель глоссария
+
+День 32: [ ] Translation Memory: хранение пар "оригинал-перевод" [ ] Отображение совпадений в UI
+
+День 33: [💤] Стилизация перевода: rule-based фильтры [ ] Тестирование на разных языках
+
+День 34: [ ] Использование post.json для коррекции перевода [ ] Автомаппинг символов и тире
+
+День 35: [ ] BLEU оценка перевода [ ] Лог метрик в файл JSON
+
+
+---
+
+🖼️ Неделя 6: Визуальное наложение (дни 36–42)
+
+День 36: [ ] Удаление оригинального текста: Inpainting с OpenCV (JNI) [ ] Тест на 10 страницах
+
+День 37: [ ] Автоподбор шрифта (TrueType) [ ] Поддержка вертикального текста
+
+День 38: [ ] Цвет фона → цвет текста [ ] Кернинг, выравнивание
+
+День 39: [ ] Эффекты: градиент, тень, обводка [ ] Примеры мультяшного стиля
+
+День 40: [🔥] Overlay-текст на Android (Canvas или View) [ ] Анимация появления
+
+День 41: [ ] Экспорт итогового изображения в PNG [ ] Настройки качества и размера
+
+День 42: [🔥] Интеграционный тест: OCR → Translate → Overlay [ ] Отчёт времени и ошибок
+
+
+---
+
+🎨 Неделя 7: Интерфейс и кастомизация (дни 43–49)
+
+День 43: [ ] Темы: светлая/тёмная/Material You [ ] UI переключатель
+
+День 44: [ ] Перетаскиваемые панели инструментов [ ] Сохранение конфигурации
+
+День 45: [ ] Поддержка TTF/OTF/Google Fonts [ ] Emoji и сложные скрипты
+
+День 46: [ ] Адаптивный UI: планшеты и складные устройства [ ] Тестирование разных экранов
+
+День 47: [ ] TalkBack, Voice Access, масштабирование [ ] Проверка WCAG-контрастности
+
+День 48: [ ] Профили тем: Light/Dark/Custom [ ] Экспорт/импорт настроек
+
+День 49: [ ] UI Unit-тесты тем и кастомизации [ ] Документация компонентов
+
+
+---
+
+🔌 Неделя 8: Плагины и расширения (дни 50–56)
+
+День 50: [🔥] Интерфейсы: OCRPlugin, TranslatePlugin, FormatHandler [ ] Пример плагина: SampleOcrPlugin.kt
+
+День 51: [ ] Sandbox-изоляция плагинов (classloader + сигнатуры) [ ] Валидация зависимостей
+
+День 52: [ ] Менеджер плагинов: install/uninstall UI [ ] Отображение зависимостей
+
+День 53: [ ] SDK-шаблоны + документация для разработчиков [ ] Wiki или site.md
+
+День 54: [ ] Каталог плагинов: UI Store, рейтинги [ ] Фильтрация по категориям
+
+День 55: [ ] Автообновление плагинов + откат [ ] Хранилище версий
+
+День 56: [ ] Тесты установки/удаления [ ] Лог ошибок плагинов
+
+
+---
+
+📊 Неделя 9: Аналитика и выпуск (дни 57–60)
+
+День 57: [🔥] Лог OCR-confidence и BLEU в JSON [ ] Ошибки в UI и Logcat
+
+День 58: [ ] UI форма обратной связи [ ] Экспорт отчётов пользователем
+
+День 59: [🔥] Прогон всех тестов (unit + instrumented) [ ] Сбор покрытия и отчёт багов
+
+День 60: [🔥] Сборка релиза: v1.0.0-mvp [🔥] Pull Request с changelog и release notes
+
+
+---
+
+🏁 Критерии успеха: ✅ Полнофункциональный Android-ридер с 15+ форматами, OCR и переводом ✅ Темы, плагины, визуальный редактор ✅ Полные UI/инструментальные тесты ✅ Готовность к открытому релизу (Store/Beta)
+
 
 
