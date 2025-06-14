@@ -7,12 +7,12 @@ plugins {
 }
 
 android {
-    compileSdkVersion 33
+    compileSdkVersion 34
     
     defaultConfig {
         applicationId "com.example.mrcomic"
         minSdkVersion 21
-        targetSdkVersion 33
+        targetSdkVersion 34
         versionCode 1
         versionName "1.0"
         
@@ -43,7 +43,7 @@ android {
 
 dependencies {
     // Core Android
-    implementation 'androidx.core:core-ktx:1.9.0'
+
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.8.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
