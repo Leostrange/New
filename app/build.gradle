@@ -10,7 +10,7 @@ android {
     compileSdkVersion 33
     
     defaultConfig {
-        applicationId "com.mrcomic.app"
+        applicationId "com.example.mrcomic"
         minSdkVersion 21
         targetSdkVersion 33
         versionCode 1

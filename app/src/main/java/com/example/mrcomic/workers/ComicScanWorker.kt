@@ -1,12 +1,12 @@
-package com.example.comicapp.workers
+package com.example.mrcomic.workers
 
 import android.content.Context
 import androidx.documentfile.provider.DocumentFile
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import com.example.comicapp.data.AppDatabase
-import com.example.comicapp.utils.ComicScanner
+import com.example.mrcomic.data.AppDatabase
+import com.example.mrcomic.utils.ComicScanner
 
 class ComicScanWorker(appContext: Context, params: WorkerParameters) : CoroutineWorker(appContext, params) {
     override suspend fun doWork(): Result {

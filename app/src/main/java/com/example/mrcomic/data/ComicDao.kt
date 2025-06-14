@@ -1,14 +1,23 @@
+package com.example.mrcomic.data
+
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import kotlinx.coroutines.flow.Flow
+
 @Dao
 interface ComicDao {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertAnnotation(annotation: Annotation)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertComic(comic: ComicEntity)
 
-    @Query("SELECT * FROM annotations WHERE comicId = :comicId AND pageIndex = :pageIndex LIMIT 1")
-    suspend fun getAnnotation(comicId: Int, pageIndex: Int): Annotation?
+    @Query("SELECT * FROM comics WHERE file_path = :filePath")
+    suspend fun getComicByFilePath(filePath: String): ComicEntity?
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertOcrResult(result: OcrResult)
+    @Query("SELECT * FROM comics")
+    fun getAllComics(): Flow<List<ComicEntity>>
 
-    @Query("SELECT * FROM ocr_results WHERE comicId = :comicId AND pageIndex = :pageIndex LIMIT 1")
-    suspend fun getOcrResult(comicId: Int, pageIndex: Int): OcrResult?
-} 
+    @Query("DELETE FROM comics")
+    suspend fun clearDatabase()
+}
+

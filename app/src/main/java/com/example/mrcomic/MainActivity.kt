@@ -1,4 +1,4 @@
-package com.example.comicapp
+package com.example.mrcomic
 
 import android.Manifest
 import android.content.Intent
@@ -11,7 +11,7 @@ import androidx.core.content.ContextCompat
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
-import com.example.comicapp.workers.ComicScanWorker
+import com.example.mrcomic.workers.ComicScanWorker
 import android.content.pm.PackageManager
 
 class MainActivity : AppCompatActivity() {

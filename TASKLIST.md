@@ -2,7 +2,7 @@
 
 #### ComicEntity.kt
 ```kotlin
-package com.example.comicapp.data
+package com.example.mrcomic.data
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
@@ -27,7 +27,7 @@ data class ComicEntity(
 
 #### ComicDao.kt
 ```kotlin
-package com.example.comicapp.data
+package com.example.mrcomic.data
 
 import androidx.room.Dao
 import androidx.room.Insert
@@ -53,7 +53,7 @@ interface ComicDao {
 
 #### AppDatabase.kt
 ```kotlin
-package com.example.comicapp.data
+package com.example.mrcomic.data
 
 import android.content.Context
 import androidx.room.Database
@@ -85,11 +85,11 @@ abstract class AppDatabase : RoomDatabase() {
 
 #### ComicScanner.kt
 ```kotlin
-package com.example.comicapp.utils
+package com.example.mrcomic.utils
 
 import androidx.documentfile.provider.DocumentFile
-import com.example.comicapp.data.ComicDao
-import com.example.comicapp.data.ComicEntity
+import com.example.mrcomic.data.ComicDao
+import com.example.mrcomic.data.ComicEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -170,13 +170,13 @@ class ComicScanner(private val comicDao: ComicDao) {
 
 #### ComicListViewModel.kt
 ```kotlin
-package com.example.comicapp.viewmodel
+package com.example.mrcomic.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.comicapp.data.ComicDao
-import com.example.comicapp.data.ComicEntity
-import com.example.comicapp.utils.ComicScanner
+import com.example.mrcomic.data.ComicDao
+import com.example.mrcomic.data.ComicEntity
+import com.example.mrcomic.utils.ComicScanner
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
@@ -200,15 +200,15 @@ class ComicListViewModel(private val comicDao: ComicDao) : ViewModel() {
 
 #### ComicScanWorker.kt
 ```kotlin
-package com.example.comicapp.workers
+package com.example.mrcomic.workers
 
 import android.content.Context
 import androidx.documentfile.provider.DocumentFile
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import com.example.comicapp.data.AppDatabase
-import com.example.comicapp.utils.ComicScanner
+import com.example.mrcomic.data.AppDatabase
+import com.example.mrcomic.utils.ComicScanner
 
 class ComicScanWorker(appContext: Context, params: WorkerParameters) : CoroutineWorker(appContext, params) {
     override suspend fun doWork(): Result {
@@ -231,7 +231,7 @@ class ComicScanWorker(appContext: Context, params: WorkerParameters) : Coroutine
 
 #### MainActivity.kt
 ```kotlin
-package com.example.comicapp
+package com.example.mrcomic
 
 import android.Manifest
 import android.content.Intent
@@ -244,7 +244,7 @@ import androidx.core.content.ContextCompat
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.workDataOf
-import com.example.comicapp.workers.ComicScanWorker
+import com.example.mrcomic.workers.ComicScanWorker
 import android.content.pm.PackageManager
 
 class MainActivity : AppCompatActivity() {
@@ -314,7 +314,7 @@ class MainActivity : AppCompatActivity() {
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.comicapp">
+    package="com.example.mrcomic">
 
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
@@ -347,7 +347,7 @@ plugins {
 android {
     compileSdk 35
     defaultConfig {
-        applicationId "com.example.comicapp"
+        applicationId "com.example.mrcomic"
         minSdk 24
         targetSdk 35
         versionCode 1
@@ -398,15 +398,15 @@ dependencies {
 ### Tasklist для внедрения и замены Python-реализации
 
 1. **Создай новый проект в Android Studio Meerkat**:
-   - Используй шаблон Empty Activity, package name `com.example.comicapp`.
+   - Используй шаблон Empty Activity, package name `com.example.mrcomic`.
    - Убедись, что Gradle настроен на Kotlin 2.0 и Gradle 8.5+.
 
 2. **Добавь файлы кода**:
-   - Скопируй `ComicEntity.kt`, `ComicDao.kt`, `AppDatabase.kt` в `app/src/main/java/com/example/comicapp/data`.
-   - Скопируй `ComicScanner.kt` в `app/src/main/java/com/example/comicapp/utils`.
-   - Скопируй `ComicListViewModel.kt` в `app/src/main/java/com/example/comicapp/viewmodel`.
-   - Скопируй `ComicScanWorker.kt` в `app/src/main/java/com/example/comicapp/workers`.
-   - Скопируй `MainActivity.kt` в `app/src/main/java/com.example/comicapp`.
+   - Скопируй `ComicEntity.kt`, `ComicDao.kt`, `AppDatabase.kt` в `app/src/main/java/com.example.mrcomic/data`.
+   - Скопируй `ComicScanner.kt` в `app/src/main/java/com.example.mrcomic/utils`.
+   - Скопируй `ComicListViewModel.kt` в `app/src/main/java/com.example.mrcomic/viewmodel`.
+   - Скопируй `ComicScanWorker.kt` в `app/src/main/java/com.example.mrcomic/workers`.
+   - Скопируй `MainActivity.kt` в `app/src/main/java/com.example.mrcomic`.
    - Скопируй `activity_main.xml` в `app/src/main/res/layout`.
    - Замени `AndroidManifest.xml` содержимым из списка.
 
@@ -416,7 +416,7 @@ dependencies {
 
 4. **Тестирование базы данных**:
    - Запусти приложение, убедись, что база данных (`comics_database`) создается (проверь через Device File Explorer: `data/data/
-com.example.comicapp/databases/comics_database`).
+com.example.mrcomic/databases/comics_database`).
    - Проверь, что при повторном запуске приложение не крашится и база данных не перезаписывается.
 
 ---
