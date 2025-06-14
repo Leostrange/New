@@ -20,7 +20,6 @@ import com.example.mrcomic.data.ReadingStatsDao
         Rating::class,
         Comment::class,
         Download::class,
-        Comic::class,
         FailedImport::class,
         ComicFts::class,
         ReadingStats::class
@@ -34,8 +33,7 @@ abstract class ThemeDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun ratingDao(): RatingDao
     abstract fun commentDao(): CommentDao
-    abstract fun downloadDao(): DownloadDao
-    abstract fun comicDao(): ComicDao
-    abstract fun comicFtsDao(): ComicFtsDao
+     abstract fun comicFtsDao(): ComicFtsDao
     abstract fun readingStatsDao(): ReadingStatsDao
 }
+
