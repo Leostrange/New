@@ -1,0 +1,8 @@
+# Временные и служебные папки
+.gradle/
+.idea/
+build/
+node_modules/
+test_cache/
+results/
+__pycache__/
