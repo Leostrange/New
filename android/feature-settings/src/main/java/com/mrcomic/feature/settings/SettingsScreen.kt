@@ -25,6 +25,9 @@ fun SettingsScreen(
 ) {
     var showThemeDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
+    var showThemeBuilderDialog by remember { mutableStateOf(false) }
+    var showFontDialog by remember { mutableStateOf(false) }
+    var showIconDialog by remember { mutableStateOf(false) }
 
     LazyColumn(
         modifier = modifier.fillMaxSize(),
@@ -153,6 +156,52 @@ fun SettingsScreen(
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
+                        "Customization",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    
+                    SettingsItem(
+                        title = "Theme Builder",
+                        subtitle = "Create custom themes",
+                        icon = Icons.Default.Brush,
+                        onClick = { showThemeBuilderDialog = true }
+                    )
+                    
+                    SettingsItem(
+                        title = "Custom Themes",
+                        subtitle = "Manage your themes",
+                        icon = Icons.Default.ColorLens,
+                        onClick = { /* TODO: Show custom themes manager */ }
+                    )
+                    
+                    SettingsItem(
+                        title = "Fonts",
+                        subtitle = "Sans Serif",
+                        icon = Icons.Default.TextFields,
+                        onClick = { showFontDialog = true }
+                    )
+                    
+                    SettingsItem(
+                        title = "Icon Pack",
+                        subtitle = "Material Design",
+                        icon = Icons.Default.Apps,
+                        onClick = { showIconDialog = true }
+                    )
+                    
+                    SettingsItem(
+                        title = "Layout Customization",
+                        subtitle = "Adjust UI elements",
+                        icon = Icons.Default.ViewQuilt,
+                        onClick = { /* TODO: Show layout customization */ }
+                    )
+                }
+            }
+        }
+        
+        item {
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(
                         "Optimization",
                         style = MaterialTheme.typography.titleMedium
                     )
@@ -234,6 +283,36 @@ fun SettingsScreen(
                 showLanguageDialog = false
             },
             onDismiss = { showLanguageDialog = false }
+        )
+    }
+    
+    if (showThemeBuilderDialog) {
+        ThemeBuilderDialog(
+            onDismiss = { showThemeBuilderDialog = false },
+            onThemeCreated = { customTheme ->
+                // TODO: Save custom theme
+                showThemeBuilderDialog = false
+            }
+        )
+    }
+    
+    if (showFontDialog) {
+        FontSelectionDialog(
+            onFontSelected = { font ->
+                // TODO: Apply font
+                showFontDialog = false
+            },
+            onDismiss = { showFontDialog = false }
+        )
+    }
+    
+    if (showIconDialog) {
+        IconPackDialog(
+            onIconPackSelected = { iconPack ->
+                // TODO: Apply icon pack
+                showIconDialog = false
+            },
+            onDismiss = { showIconDialog = false }
         )
     }
 }
@@ -369,6 +448,63 @@ private fun LanguageSelectionDialog(
             }
         },
         dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+private fun ThemeBuilderDialog(
+    onDismiss: () -> Unit,
+    onThemeCreated: (String) -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Theme Builder") },
+        text = {
+            Text("Create your custom theme here.")
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+private fun FontSelectionDialog(
+    onFontSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Font Selection") },
+        text = {
+            Text("Select your preferred font.")
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+private fun IconPackDialog(
+    onIconPackSelected: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Icon Pack Selection") },
+        text = {
+            Text("Choose your icon pack.")
+        },
+        confirmButton = {
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
             }
