@@ -1,0 +1,28 @@
+{
+  "id": "comic-translator",
+  "name": "Переводчик комиксов",
+  "version": "1.2.0",
+  "author": "MrComic Team",
+  "description": "Автоматический перевод текста в комиксах с поддержкой множества языков и OCR",
+  "category": "TRANSLATION",
+  "type": "JAVASCRIPT",
+  "permissions": [
+    "READ_FILES",
+    "WRITE_FILES",
+    "NETWORK_ACCESS",
+    "READER_CONTROL",
+    "UI_MODIFICATION"
+  ],
+  "dependencies": [],
+  "configurable": true,
+  "main": "main.js",
+  "icon": "icon.png",
+  "homepage": "https://github.com/mrcomic/plugins/comic-translator",
+  "keywords": ["translation", "ocr", "text", "multilingual"],
+  "engines": {
+    "mrcomic": ">=1.0.0"
+  },
+  "supportedLanguages": [
+    "en", "ru", "ja", "ko", "zh", "fr", "de", "es", "it"
+  ]
+}

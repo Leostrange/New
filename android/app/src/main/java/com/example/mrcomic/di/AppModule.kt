@@ -7,6 +7,7 @@ import com.google.gson.GsonBuilder
 import com.example.core.data.repository.SettingsRepository
 import com.example.mrcomic.data.LocalTranslationEngine
 import com.example.mrcomic.data.DummyLocalTranslationEngine
+import com.example.mrcomic.BuildConfig
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.Module
 import dagger.Provides
@@ -20,19 +21,13 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 import com.example.mrcomic.data.OcrTranslationRepository
 
-// Условный BuildConfig для базового URL. В реальном проекте он будет генерироваться Gradle.
-object FakeBuildConfig {
-    const val DEBUG = true
-    const val BASE_API_URL = "http://10.0.2.2:3000/api/"
-}
-
 @Module
 @InstallIn(SingletonComponent::class)
 object AppModule {
 
     @Provides
     @Singleton
-    fun provideBaseUrl(): String = FakeBuildConfig.BASE_API_URL
+    fun provideBaseUrl(): String = BuildConfig.BASE_API_URL
 
     @Provides
     @Singleton
@@ -42,7 +37,7 @@ object AppModule {
     @Singleton
     fun provideHttpLoggingInterceptor(): HttpLoggingInterceptor {
         val loggingInterceptor = HttpLoggingInterceptor()
-        loggingInterceptor.level = if (FakeBuildConfig.DEBUG) {
+        loggingInterceptor.level = if (BuildConfig.DEBUG) {
             HttpLoggingInterceptor.Level.BODY
         } else {
             HttpLoggingInterceptor.Level.NONE

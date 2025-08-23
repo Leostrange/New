@@ -1,0 +1,23 @@
+{
+  "id": "image-enhancer",
+  "name": "Улучшение изображений",
+  "version": "1.0.0",
+  "author": "MrComic Team",
+  "description": "Плагин для автоматического улучшения качества изображений комиксов с помощью AI",
+  "category": "IMAGE_PROCESSING",
+  "type": "JAVASCRIPT",
+  "permissions": [
+    "READ_FILES",
+    "WRITE_FILES",
+    "READER_CONTROL"
+  ],
+  "dependencies": [],
+  "configurable": true,
+  "main": "main.js",
+  "icon": "icon.png",
+  "homepage": "https://github.com/mrcomic/plugins/image-enhancer",
+  "keywords": ["image", "enhancement", "ai", "quality"],
+  "engines": {
+    "mrcomic": ">=1.0.0"
+  }
+}

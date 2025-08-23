@@ -37,4 +37,15 @@
     <string name="notifications">Уведомления</string>
     <string name="back">Назад</string>
     <string name="next">Далее</string>
+    
+    <!-- Плагины -->
+    <string name="plugins_title">Управление плагинами</string>
+    <string name="install_plugin">Установить плагин</string>
+    <string name="plugin_store">Магазин плагинов</string>
+    <string name="plugin_permissions">Разрешения плагина</string>
+    <string name="grant_permissions">Предоставить разрешения</string>
+    <string name="deny_permissions">Отклонить</string>
+    <string name="plugin_activated">Плагин активирован</string>
+    <string name="plugin_deactivated">Плагин деактивирован</string>
+    <string name="no_plugins_installed">Нет установленных плагинов</string>
 </resources> 

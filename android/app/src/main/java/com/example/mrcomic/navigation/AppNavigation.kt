@@ -9,10 +9,12 @@ import com.example.feature.library.ui.LibraryScreen
 import com.example.feature.settings.ui.SettingsScreen
 import com.example.feature.onboarding.OnboardingScreen
 import com.example.feature.reader.ui.ReaderScreen
+import com.example.feature.plugins.ui.PluginsScreen
 
 sealed class Screen(val route: String) {
     data object Library : Screen("library")
     data object Settings : Screen("settings")
+    data object Plugins : Screen("plugins")
     data object Onboarding : Screen("onboarding")
     data object Reader : Screen("reader/{uri}") {
         fun create(uri: String) = "reader/$uri"
@@ -26,12 +28,19 @@ fun AppNavHost(navController: NavHostController, onOnboardingComplete: () -> Uni
             LibraryScreen(
                 onBookClick = { path -> navController.navigate(Screen.Reader.create(path)) },
                 onSettingsClick = { navController.navigate(Screen.Settings.route) },
+                onPluginsClick = { navController.navigate(Screen.Plugins.route) },
                 onAddClick = { }
             )
         }
 
         composable(route = Screen.Settings.route) {
             SettingsScreen()
+        }
+
+        composable(route = Screen.Plugins.route) {
+            PluginsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         composable(route = Screen.Onboarding.route) {

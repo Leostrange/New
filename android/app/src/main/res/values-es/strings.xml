@@ -37,4 +37,15 @@
     <string name="notifications">Notificaciones</string>
     <string name="back">Atrás</string>
     <string name="next">Siguiente</string>
+    
+    <!-- Plugins -->
+    <string name="plugins_title">Gestión de plugins</string>
+    <string name="install_plugin">Instalar plugin</string>
+    <string name="plugin_store">Tienda de plugins</string>
+    <string name="plugin_permissions">Permisos del plugin</string>
+    <string name="grant_permissions">Conceder permisos</string>
+    <string name="deny_permissions">Rechazar</string>
+    <string name="plugin_activated">Plugin activado</string>
+    <string name="plugin_deactivated">Plugin desactivado</string>
+    <string name="no_plugins_installed">No hay plugins instalados</string>
 </resources> 

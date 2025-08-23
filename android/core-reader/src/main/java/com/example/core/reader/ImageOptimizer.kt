@@ -76,7 +76,7 @@ class ImageOptimizer @Inject constructor(
             val finalOptions = BitmapFactory.Options().apply {
                 inSampleSize = scaleFactor
                 inPreferredConfig = Bitmap.Config.RGB_565 // Экономим память
-                inDither = true
+                // inDither удален как deprecated
             }
             
             val bitmap = BitmapFactory.decodeFile(imagePath, finalOptions)
@@ -325,10 +325,46 @@ class ImageOptimizer @Inject constructor(
     }
     
     private fun applyConvolutionMatrix(bitmap: Bitmap, matrix: FloatArray): Bitmap {
-        // Упрощенная реализация свертки
+        val width = bitmap.width
+        val height = bitmap.height
         val safeConfig = bitmap.config ?: Bitmap.Config.ARGB_8888
-        val result = bitmap.copy(safeConfig, true)
-        // Здесь должна быть реализация свертки
+        val result = Bitmap.createBitmap(width, height, safeConfig)
+        
+        val pixels = IntArray(width * height)
+        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
+        val resultPixels = IntArray(width * height)
+        
+        val matrixSize = kotlin.math.sqrt(matrix.size.toDouble()).toInt()
+        val offset = matrixSize / 2
+        
+        for (y in offset until height - offset) {
+            for (x in offset until width - offset) {
+                var red = 0f
+                var green = 0f
+                var blue = 0f
+                
+                for (ky in 0 until matrixSize) {
+                    for (kx in 0 until matrixSize) {
+                        val pixelIndex = (y + ky - offset) * width + (x + kx - offset)
+                        val pixel = pixels[pixelIndex]
+                        val matrixValue = matrix[ky * matrixSize + kx]
+                        
+                        red += ((pixel shr 16) and 0xFF) * matrixValue
+                        green += ((pixel shr 8) and 0xFF) * matrixValue
+                        blue += (pixel and 0xFF) * matrixValue
+                    }
+                }
+                
+                val resultIndex = y * width + x
+                val alpha = (pixels[resultIndex] shr 24) and 0xFF
+                resultPixels[resultIndex] = (alpha shl 24) or
+                    ((red.toInt().coerceIn(0, 255)) shl 16) or
+                    ((green.toInt().coerceIn(0, 255)) shl 8) or
+                    (blue.toInt().coerceIn(0, 255))
+            }
+        }
+        
+        result.setPixels(resultPixels, 0, width, 0, 0, width, height)
         return result
     }
 }

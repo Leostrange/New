@@ -72,6 +72,9 @@ project(":android:feature-settings").projectDir = file("android/feature-settings
 include(":android:feature-themes")
 project(":android:feature-themes").projectDir = file("android/feature-themes")
 
+include(":android:feature-plugins")
+project(":android:feature-plugins").projectDir = file("android/feature-plugins")
+
 // Shared modules
 include(":android:shared")
 project(":android:shared").projectDir = file("android/shared")

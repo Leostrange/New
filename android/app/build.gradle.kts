@@ -24,15 +24,29 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+        
+        // BuildConfig поля для конфигурации
+        buildConfigField("String", "BASE_API_URL", "\"http://10.0.2.2:3000/api/\"")
+        buildConfigField("boolean", "ENABLE_LOGGING", "true")
+        buildConfigField("String", "PLUGIN_STORE_URL", "\"https://plugins.mrcomic.app/\"")
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            
+            // Enable additional optimizations
+            isDebuggable = false
+            isJniDebuggable = false
+            isRenderscriptDebuggable = false
+            
+            // Optimize for release
+            signingConfig = signingConfigs.getByName("debug") // Use proper signing in production
         }
         
         debug {
@@ -53,6 +67,7 @@ android {
     
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     
     composeOptions {
@@ -115,6 +130,7 @@ dependencies {
     implementation(project(":android:feature-reader"))
     implementation(project(":android:feature-themes"))
     implementation(project(":android:feature-onboarding"))
+    implementation(project(":android:feature-plugins"))
     
     // Third-party libraries
     implementation(libs.coil.compose)

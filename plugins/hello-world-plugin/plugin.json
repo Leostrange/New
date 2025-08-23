@@ -1,0 +1,13 @@
+{
+  "id": "hello-world",
+  "name": "Hello World",
+  "version": "1.0.0",
+  "author": "MrComic Team",
+  "description": "Простой тестовый плагин для демонстрации базовой функциональности",
+  "category": "UTILITY",
+  "type": "JAVASCRIPT",
+  "permissions": [],
+  "dependencies": [],
+  "configurable": false,
+  "main": "main.js"
+}

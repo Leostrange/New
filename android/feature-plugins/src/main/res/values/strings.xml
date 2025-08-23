@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Plugin Management Strings -->
+    <string name="plugins_title">Управление плагинами</string>
+    <string name="install_plugin">Установить плагин</string>
+    <string name="plugin_store">Магазин плагинов</string>
+    <string name="plugin_permissions">Разрешения плагина</string>
+    <string name="grant_permissions">Предоставить разрешения</string>
+    <string name="deny_permissions">Отклонить</string>
+    <string name="plugin_activated">Плагин активирован</string>
+    <string name="plugin_deactivated">Плагин деактивирован</string>
+    <string name="no_plugins_installed">Нет установленных плагинов</string>
+    <string name="loading_plugins">Загрузка плагинов…</string>
+    <string name="plugin_error">Ошибка плагина</string>
+    <string name="refresh_plugins">Обновить</string>
+    <string name="back">Назад</string>
+    
+    <!-- Plugin Details -->
+    <string name="plugin_version">Версия: %1$s</string>
+    <string name="plugin_author">Автор: %1$s</string>
+    <string name="plugin_category">Категория: %1$s</string>
+    <string name="plugin_enabled">Включен</string>
+    <string name="plugin_disabled">Отключен</string>
+    <string name="configure_plugin">Настроить</string>
+    <string name="uninstall_plugin">Удалить</string>
+    
+    <!-- Permission Types -->
+    <string name="permission_read_files">Чтение файлов</string>
+    <string name="permission_write_files">Запись файлов</string>
+    <string name="permission_network_access">Доступ к сети</string>
+    <string name="permission_camera_access">Доступ к камере</string>
+    <string name="permission_storage_access">Доступ к хранилищу</string>
+    <string name="permission_system_settings">Настройки системы</string>
+    <string name="permission_reader_control">Управление читалкой</string>
+    <string name="permission_ui_modification">Изменение интерфейса</string>
+    
+    <!-- Plugin Categories -->
+    <string name="category_reader_enhancement">Улучшение читалки</string>
+    <string name="category_image_processing">Обработка изображений</string>
+    <string name="category_translation">Перевод</string>
+    <string name="category_export">Экспорт</string>
+    <string name="category_utility">Утилиты</string>
+    <string name="category_theme">Темы</string>
+    <string name="category_format_support">Поддержка форматов</string>
+    <string name="category_integration">Интеграция</string>
+    
+    <!-- Messages -->
+    <string name="plugin_installation_success">Плагин успешно установлен</string>
+    <string name="plugin_installation_failed">Ошибка установки плагина</string>
+    <string name="plugin_uninstall_success">Плагин удален</string>
+    <string name="plugin_uninstall_failed">Ошибка при удалении плагина</string>
+    <string name="permission_request_title">Запрос разрешений</string>
+    <string name="permission_request_message">Плагин запрашивает следующие разрешения:</string>
+    <string name="retry">Повторить</string>
+</resources>

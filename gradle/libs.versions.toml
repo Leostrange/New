@@ -227,7 +227,7 @@ m2m100-android = { group = "com.facebook", name = "M2M100", version.ref = "m2m10
 nllb-android = { group = "com.facebook", name = "NLLB", version.ref = "nllb" }
 
 [bundles]
-compose = ["androidx-compose-ui", "androidx-compose-material3", "androidx-compose-ui-tooling-preview", "androidx-compose-window-size"]
+compose = ["androidx-compose-ui", "androidx-compose-material3", "androidx-compose-ui-tooling-preview"]
 room = ["androidx-room-runtime", "androidx-room-ktx"]
 test-unit = ["test-junit", "test-kotlinx-coroutines", "test-mockito-core", "test-mockito-kotlin", "test-truth", "test-mockk", "test-arch-core"]
 ocr = ["tesseract-android", "paddleocr-android", "easyocr-android", "trocr-android"]
