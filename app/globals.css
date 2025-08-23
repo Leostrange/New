@@ -1,10 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* Removed problematic tw-animate-css import and simplified CSS syntax */
+@custom-variant dark (&:is(.dark *));
+@custom-variant sepia (&:is(.sepia *));
 
 :root {
-  /* Light Theme */
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
@@ -41,7 +41,6 @@
 }
 
 .dark {
-  /* Dark Theme */
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.145 0 0);
@@ -77,30 +76,44 @@
 }
 
 .sepia {
-  /* Sepia Theme for Reading */
-  --background: 244 241 232; /* #f4f1e8 - warm sepia background */
-  --foreground: 61 57 41; /* #3d3929 - dark sepia text */
-  --card: 237 232 220; /* #ede8dc */
-  --card-foreground: 61 57 41;
-  --popover: 237 232 220;
-  --popover-foreground: 61 57 41;
-  --primary: 92 79 58; /* #5c4f3a - sepia primary */
-  --primary-foreground: 244 241 232;
-  --secondary: 224 215 199; /* #e0d7c7 */
-  --secondary-foreground: 61 57 41;
-  --muted: 224 215 199;
-  --muted-foreground: 107 93 71;
-  --accent: 107 93 71; /* #6b5d47 - sepia accent */
-  --accent-foreground: 244 241 232;
-  --destructive: 239 68 68;
-  --destructive-foreground: 255 255 255;
-  --border: 212 200 184; /* #d4c8b8 */
-  --input: 237 232 220;
-  --ring: 107 93 71;
+  /* Added sepia theme for comfortable reading */
+  --background: oklch(0.96 0.02 85);
+  --foreground: oklch(0.25 0.02 85);
+  --card: oklch(0.94 0.02 85);
+  --card-foreground: oklch(0.25 0.02 85);
+  --popover: oklch(0.94 0.02 85);
+  --popover-foreground: oklch(0.25 0.02 85);
+  --primary: oklch(0.35 0.05 85);
+  --primary-foreground: oklch(0.96 0.02 85);
+  --secondary: oklch(0.88 0.02 85);
+  --secondary-foreground: oklch(0.25 0.02 85);
+  --muted: oklch(0.88 0.02 85);
+  --muted-foreground: oklch(0.45 0.02 85);
+  --accent: oklch(0.45 0.05 85);
+  --accent-foreground: oklch(0.96 0.02 85);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.96 0.02 85);
+  --border: oklch(0.82 0.02 85);
+  --input: oklch(0.94 0.02 85);
+  --ring: oklch(0.45 0.05 85);
+  --chart-1: oklch(0.35 0.05 85);
+  --chart-2: oklch(0.45 0.05 85);
+  --chart-3: oklch(0.55 0.05 85);
+  --chart-4: oklch(0.65 0.05 85);
+  --chart-5: oklch(0.75 0.05 85);
+  --sidebar: oklch(0.92 0.02 85);
+  --sidebar-foreground: oklch(0.25 0.02 85);
+  --sidebar-primary: oklch(0.35 0.05 85);
+  --sidebar-primary-foreground: oklch(0.96 0.02 85);
+  --sidebar-accent: oklch(0.88 0.02 85);
+  --sidebar-accent-foreground: oklch(0.25 0.02 85);
+  --sidebar-border: oklch(0.82 0.02 85);
+  --sidebar-ring: oklch(0.45 0.05 85);
 }
 
 @theme inline {
-  /* optional: --font-sans, --font-serif, --font-mono if they are applied in the layout.tsx */
+  --font-sans: var(--font-geist);
+  --font-serif: var(--font-manrope);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -145,44 +158,5 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
-  }
-}
-
-/* Added custom dark and sepia variant support using standard CSS */
-@media (prefers-color-scheme: dark) {
-  :root:not(.light) {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.145 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.145 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.269 0 0);
-    --input: oklch(0.269 0 0);
-    --ring: oklch(0.439 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.269 0 0);
-    --sidebar-ring: oklch(0.439 0 0);
   }
 }
