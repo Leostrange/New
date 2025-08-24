@@ -28,3 +28,23 @@ Continue building your app on:
 2. Deploy your chats from the v0 interface
 3. Changes are automatically pushed to this repository
 4. Vercel deploys the latest version from this repository
+
+---
+
+## Android (local build & install)
+
+- Ensure an Android device is connected with USB debugging enabled or an emulator is running.
+- If an older app with the same `applicationId` is present, uninstall it first:
+
+```bash
+adb uninstall com.mrcomic || true
+```
+
+- Build and install the debug APK:
+
+```bash
+cd android
+./gradlew :app:installDebug
+```
+
+- Run the app from the launcher. The flow should be: splash background → video splash → welcome → tap "Начать" → main interface.
