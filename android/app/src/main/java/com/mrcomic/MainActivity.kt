@@ -1,3 +1,4 @@
+@file:OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 package com.mrcomic
 
 import android.os.Bundle
@@ -26,72 +27,73 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        
-        setContent {
-            var currentTheme by remember { mutableStateOf(AppTheme.LIGHT) }
-            val navController = rememberNavController()
-            
-            MrComicTheme(appTheme = currentTheme) {
-                Scaffold(
-                    modifier = Modifier.fillMaxSize(),
-                    bottomBar = {
-                        NavigationBar {
-                            val screens = listOf(
-                                Screen("library", "Домой", Icons.Default.Home),
-                                Screen("reader", "Чтение", Icons.Default.Book),
-                                Screen("translations", "Переводы", Icons.Default.Translate),
-                                Screen("settings", "Настройки", Icons.Default.Settings)
-                            )
-                            
-                            screens.forEach { screen ->
-                                NavigationBarItem(
-                                    icon = { Icon(screen.icon, contentDescription = screen.title) },
-                                    label = { Text(screen.title) },
-                                    selected = false, // TODO: implement current route detection
-                                    onClick = { navController.navigate(screen.route) }
-                                )
-                            }
-                        }
-                    }
-                ) { innerPadding ->
-                    NavHost(
-                        navController = navController,
-                        startDestination = "library",
-                        modifier = Modifier.padding(innerPadding)
-                    ) {
-                        composable("library") {
-                            LibraryScreen(
-                                onComicClick = { comic ->
-                                    navController.navigate("reader/${comic.id}")
-                                }
-                            )
-                        }
-                        composable("reader/{comicId}") { backStackEntry ->
-                            val comicId = backStackEntry.arguments?.getString("comicId") ?: ""
-                            ReaderScreen(
-                                comicId = comicId,
-                                onBackClick = { navController.popBackStack() }
-                            )
-                        }
-                        composable("translations") {
-                            TranslationsScreen()
-                        }
-                        composable("settings") {
-                            SettingsScreen(
-                                currentTheme = currentTheme,
-                                onThemeChange = { currentTheme = it },
-                                onBackClick = { navController.popBackStack() }
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
+		enableEdgeToEdge()
+		WindowCompat.setDecorFitsSystemWindows(window, false)
+		
+		setContent {
+			var currentTheme by remember { mutableStateOf(AppTheme.LIGHT) }
+			val navController = rememberNavController()
+			
+			MrComicTheme(appTheme = currentTheme) {
+				Scaffold(
+					modifier = Modifier.fillMaxSize(),
+					bottomBar = {
+						NavigationBar {
+							val screens = listOf(
+								Screen("library", "Домой", Icons.Default.Home),
+								Screen("reader", "Чтение", Icons.Default.Book),
+								Screen("translations", "Переводы", Icons.Default.Translate),
+								Screen("settings", "Настройки", Icons.Default.Settings)
+							)
+							
+							screens.forEach { screen ->
+								NavigationBarItem(
+									icon = { Icon(screen.icon, contentDescription = screen.title) },
+									label = { Text(screen.title) },
+									selected = false, // TODO: implement current route detection
+									onClick = { navController.navigate(screen.route) }
+								)
+							}
+						}
+					}
+				) { innerPadding ->
+					NavHost(
+						navController = navController,
+						startDestination = "library",
+						modifier = Modifier.padding(innerPadding)
+					) {
+						composable("library") {
+							LibraryScreen(
+								onComicClick = { comic ->
+									navController.navigate("reader/${comic.id}")
+								}
+							)
+						}
+						composable("reader/{comicId}") { backStackEntry ->
+							val comicId = backStackEntry.arguments?.getString("comicId") ?: ""
+							ReaderScreen(
+								comicId = comicId,
+								onBackClick = { navController.popBackStack() }
+							)
+						}
+						composable("translations") {
+							TranslationsScreen()
+						}
+						composable("settings") {
+							SettingsScreen(
+								currentTheme = currentTheme,
+								onThemeChange = { currentTheme = it },
+								onBackClick = { navController.popBackStack() }
+							)
+						}
+					}
+				}
+			}
+		}
+	}
 }
+
 
 data class Screen(val route: String, val title: String, val icon: ImageVector)
