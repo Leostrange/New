@@ -3,6 +3,7 @@ package com.mrcomic.feature.settings
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -287,7 +288,7 @@ fun SettingsScreen(
     }
     
     if (showThemeBuilderDialog) {
-        ThemeBuilderDialog(
+        ThemeBuilderDialogInternal(
             onDismiss = { showThemeBuilderDialog = false },
             onThemeCreated = { customTheme ->
                 // TODO: Save custom theme
@@ -297,7 +298,7 @@ fun SettingsScreen(
     }
     
     if (showFontDialog) {
-        FontSelectionDialog(
+        FontSelectionDialogInternal(
             onFontSelected = { font ->
                 // TODO: Apply font
                 showFontDialog = false
@@ -307,7 +308,7 @@ fun SettingsScreen(
     }
     
     if (showIconDialog) {
-        IconPackDialog(
+        IconPackDialogInternal(
             onIconPackSelected = { iconPack ->
                 // TODO: Apply icon pack
                 showIconDialog = false
@@ -456,7 +457,7 @@ private fun LanguageSelectionDialog(
 }
 
 @Composable
-private fun ThemeBuilderDialog(
+private fun ThemeBuilderDialogInternal(
     onDismiss: () -> Unit,
     onThemeCreated: (String) -> Unit
 ) {
@@ -475,7 +476,7 @@ private fun ThemeBuilderDialog(
 }
 
 @Composable
-private fun FontSelectionDialog(
+private fun FontSelectionDialogInternal(
     onFontSelected: (String) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -494,7 +495,7 @@ private fun FontSelectionDialog(
 }
 
 @Composable
-private fun IconPackDialog(
+private fun IconPackDialogInternal(
     onIconPackSelected: (String) -> Unit,
     onDismiss: () -> Unit
 ) {

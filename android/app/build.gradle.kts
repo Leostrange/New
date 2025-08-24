@@ -64,7 +64,8 @@ android {
                 "../feature-settings/src/main/java",
                 "../feature-details/src/main/java",
                 "../feature-editing/src/main/java",
-                "../feature-plugins/src/main/java"
+                "../feature-plugins/src/main/java",
+                "../core-data/src/main/java"
             )
         }
     }
@@ -84,6 +85,17 @@ dependencies {
     implementation(libs.androidx.hilt.navigation.compose)
     implementation(libs.mlkit.text.recognition)
     ksp(libs.hilt.compiler)
+    
+    // Material Components for XML themes
+    implementation(libs.material)
+    
+    // Compose Foundation and extended icons
+    implementation(libs.androidx.compose.foundation)
+    implementation(libs.androidx.compose.material.icons.extended)
+    
+    // Lifecycle compose and Coil
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.coil.compose)
     
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
