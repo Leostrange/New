@@ -1,7 +1,6 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt)
     alias(libs.plugins.ksp)
 }
@@ -52,6 +51,23 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+    sourceSets {
+        getByName("main") {
+            java.srcDirs(
+                "src/main/java",
+                "../core-model/src/main/java",
+                "../core-ui/src/main/java",
+                "../feature-library/src/main/java",
+                "../feature-reader/src/main/java",
+                "../feature-translations/src/main/java",
+                "../feature-settings/src/main/java",
+                "../feature-details/src/main/java",
+                "../feature-editing/src/main/java",
+                "../feature-plugins/src/main/java"
+            )
+        }
+    }
 }
 
 dependencies {
@@ -66,6 +82,7 @@ dependencies {
     implementation(libs.androidx.navigation.compose)
     implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
+    implementation(libs.mlkit.text.recognition)
     ksp(libs.hilt.compiler)
     
     testImplementation(libs.junit)
