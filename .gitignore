@@ -25,3 +25,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Android build outputs and large artifacts
+/android/app/build/
+/android/app/build/outputs/
+*.apk
+*.aab
+*.hprof
