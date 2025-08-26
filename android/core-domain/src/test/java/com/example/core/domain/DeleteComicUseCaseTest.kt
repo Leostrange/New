@@ -1,6 +1,6 @@
 package com.example.core.domain
 
-import com.example.feature.library.LibraryRepository
+import com.example.core.data.repository.ComicRepository
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -10,7 +10,7 @@ import org.junit.Test
 
 class DeleteComicUseCaseTest {
 
-    private lateinit var repository: LibraryRepository
+    private lateinit var repository: ComicRepository
     private lateinit var deleteComicUseCase: DeleteComicUseCase
 
     @Before
@@ -25,10 +25,10 @@ class DeleteComicUseCaseTest {
         val comicId = "test-comic-id"
 
         // When
-        deleteComicUseCase.invoke(comicId)
+        deleteComicUseCase.invoke(setOf(comicId))
 
         // Then
-        coVerify(exactly = 1) { repository.deleteComic(comicId) }
+        coVerify(exactly = 1) { repository.deleteComics(setOf(comicId)) }
     }
 
     @Test
@@ -36,11 +36,11 @@ class DeleteComicUseCaseTest {
         // Given
         val comicId = "test-comic-id"
         val exception = RuntimeException("Delete failed")
-        coEvery { repository.deleteComic(comicId) } throws exception
+        coEvery { repository.deleteComics(setOf(comicId)) } throws exception
 
         // When & Then
         try {
-            deleteComicUseCase.invoke(comicId)
+            deleteComicUseCase.invoke(setOf(comicId))
             assert(false) { "Expected exception to be thrown" }
         } catch (e: RuntimeException) {
             assert(e.message == "Delete failed")
@@ -53,9 +53,9 @@ class DeleteComicUseCaseTest {
         val emptyComicId = ""
 
         // When
-        deleteComicUseCase.invoke(emptyComicId)
+        deleteComicUseCase.invoke(setOf(emptyComicId))
 
         // Then
-        coVerify(exactly = 1) { repository.deleteComic(emptyComicId) }
+        coVerify(exactly = 1) { repository.deleteComics(setOf(emptyComicId)) }
     }
 }

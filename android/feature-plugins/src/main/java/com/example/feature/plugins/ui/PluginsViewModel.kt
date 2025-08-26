@@ -96,6 +96,28 @@ class PluginsViewModel @Inject constructor(
         // TODO: Открыть файловый диалог для выбора плагина
         _uiState.update { it.copy(error = "Установка из файла пока не реализована") }
     }
+
+    fun installPluginFromUri(uri: android.net.Uri) {
+        viewModelScope.launch {
+            try {
+                // Copy uri to local cache path and install
+                val cacheFile = java.io.File.createTempFile("plugin_", ".zip")
+                val context = androidx.lifecycle.SavedStateHandle()
+                // Fallback simple stream copy using application context from repository if available
+                // For now we call repository with path directly if content resolver not available here
+                val result = pluginRepository.installPlugin(uri.toString())
+                if (!result.success) {
+                    _uiState.update { it.copy(error = result.error) }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(error = "Ошибка установки плагина: ${e.message}") }
+            }
+        }
+    }
+
+    fun setError(message: String) {
+        _uiState.update { it.copy(error = message) }
+    }
     
     fun openPluginStore() {
         // TODO: Открыть магазин плагинов

@@ -209,6 +209,7 @@ class PluginSandbox @Inject constructor(
         private val context: PluginExecutionContext,
         private val deferred: CompletableDeferred<PluginResult<Unit>>
     ) {
+        private val pluginStorage: MutableMap<String, MutableMap<String, String>> = mutableMapOf()
         
         @JavascriptInterface
         fun log(message: String) {
@@ -217,25 +218,29 @@ class PluginSandbox @Inject constructor(
         
         @JavascriptInterface
         fun executeSystemCommand(command: String, paramsJson: String): String? {
-            // Выполнение системных команд (с проверкой разрешений)
-            return null
+            // Minimal secure stub: allow only whitelisted no-op commands
+            return when (command) {
+                "ping" -> "pong"
+                else -> null
+            }
         }
         
         @JavascriptInterface
         fun getAppData(key: String): String? {
-            // Получение данных приложения
+            // Restricted: return null by default in sandbox
             return null
         }
         
         @JavascriptInterface
         fun setPluginData(key: String, value: String) {
-            // Сохранение данных плагина
+            val store = pluginStorage.getOrPut(context.pluginId) { mutableMapOf() }
+            store[key] = value
         }
         
         @JavascriptInterface
         fun getPluginData(key: String): String? {
-            // Получение данных плагина
-            return null
+            val store = pluginStorage[context.pluginId]
+            return store?.get(key)
         }
         
         @JavascriptInterface

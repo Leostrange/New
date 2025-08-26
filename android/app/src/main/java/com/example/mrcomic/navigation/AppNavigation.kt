@@ -48,8 +48,7 @@ fun AppNavHost(navController: NavHostController, onOnboardingComplete: () -> Uni
         }
 
         composable(route = Screen.Reader.route) { backStackEntry ->
-            // URI parameter will be used when reader implementation is complete
-            // val uri = backStackEntry.arguments?.getString("uri") ?: ""
+            val uri = backStackEntry.arguments?.getString("uri") ?: ""
             ReaderScreen()
         }
     }

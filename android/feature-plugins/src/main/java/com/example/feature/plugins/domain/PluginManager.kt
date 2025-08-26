@@ -257,9 +257,20 @@ class PluginManager @Inject constructor(
     }
     
     private fun extractConfigFromZip(zipFile: File): File? {
-        // Извлечение plugin.json из ZIP архива
-        // В реальной реализации здесь будет работа с ZipInputStream
-        return null
+        return try {
+            val tempDir = File(context.cacheDir, "plugin_tmp_${zipFile.nameWithoutExtension}")
+            if (!tempDir.exists()) tempDir.mkdirs()
+            java.util.zip.ZipFile(zipFile).use { zf ->
+                val entry = zf.getEntry("plugin.json") ?: return null
+                val outFile = File(tempDir, "plugin.json")
+                zf.getInputStream(entry).use { input ->
+                    outFile.outputStream().use { output -> input.copyTo(output) }
+                }
+                outFile
+            }
+        } catch (e: Exception) {
+            null
+        }
     }
     
     private fun parseMetadata(configJson: String): PluginMetadata? {
