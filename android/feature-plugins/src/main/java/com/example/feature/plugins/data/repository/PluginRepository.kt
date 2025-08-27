@@ -1,7 +1,7 @@
 package com.example.feature.plugins.data.repository
 
-import com.example.feature.plugins.data.local.PluginDao
-import com.example.feature.plugins.data.local.PluginEntity
+import com.example.core.data.database.plugins.PluginDao
+import com.example.core.data.database.plugins.PluginEntity
 import com.example.feature.plugins.data.mapper.toDomain
 import com.example.feature.plugins.data.mapper.toEntity
 import com.example.feature.plugins.model.Plugin

@@ -19,6 +19,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.feature.plugins.model.*
 import com.example.feature.plugins.domain.PermissionRiskLevel
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.net.Uri
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +45,15 @@ fun PluginsScreen(
         }
     }
     
+    val filePickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+        onResult = { uri: Uri? ->
+            if (uri != null) {
+                viewModel.installPluginFromUri(uri)
+            }
+        }
+    )
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -63,7 +75,13 @@ fun PluginsScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { viewModel.installPluginFromFile() }
+                onClick = {
+                    try {
+                        filePickerLauncher.launch(arrayOf("application/zip", "application/x-zip-compressed", "application/octet-stream", "text/javascript", "application/javascript"))
+                    } catch (e: Exception) {
+                        viewModel.setError("Не удалось открыть файловый диалог: ${e.message}")
+                    }
+                }
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Установить плагин")
             }

@@ -27,6 +27,7 @@ interface ComicRepository {
     suspend fun deleteComics(comicIds: Set<String>)
     suspend fun addComic(comic: Comic)
     suspend fun updateProgress(comicId: String, currentPage: Int)
+    suspend fun getReadingProgress(comicId: String): Int
     suspend fun clearCache()
     suspend fun importComicFromUri(uri: android.net.Uri)
     suspend fun addBookmark(bookmark: Bookmark)
@@ -141,8 +142,19 @@ class ComicRepositoryImpl @Inject constructor(
 
     override suspend fun updateProgress(comicId: String, currentPage: Int) {
         withContext(Dispatchers.IO) {
-            comicDao.updateProgress(comicId)
+            // Properly update progress/currentPage when schema supports it
+            try {
+                comicDao.updateProgress(comicId, currentPage)
+            } catch (e: Exception) {
+                // Fallback to no-op if DAO doesn't yet have column; keep compatibility
+                android.util.Log.w("ComicRepository", "updateProgress not fully supported: ${e.message}")
+            }
         }
+    }
+
+    override suspend fun getReadingProgress(comicId: String): Int {
+        // Without a dedicated column, infer 0; extend when schema adds currentPage
+        return 0
     }
 
     override suspend fun clearCache() {

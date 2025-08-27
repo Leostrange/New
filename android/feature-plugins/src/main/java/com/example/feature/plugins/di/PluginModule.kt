@@ -2,8 +2,8 @@ package com.example.feature.plugins.di
 
 import android.content.Context
 import androidx.room.Room
-import com.example.core.data.AppDatabase
-import com.example.feature.plugins.data.local.PluginDao
+import com.example.core.data.database.AppDatabase
+import com.example.core.data.database.plugins.PluginDao
 import com.example.feature.plugins.data.repository.PluginRepository
 import com.example.feature.plugins.domain.*
 import dagger.Module

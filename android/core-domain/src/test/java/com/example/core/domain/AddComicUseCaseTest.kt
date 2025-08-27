@@ -1,7 +1,7 @@
 package com.example.core.domain
 
-import com.example.feature.library.data.ComicEntity
-import com.example.feature.library.LibraryRepository
+import com.example.core.data.repository.ComicRepository
+import com.example.core.model.Comic
 import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.mockk
@@ -11,7 +11,7 @@ import org.junit.Test
 
 class AddComicUseCaseTest {
 
-    private lateinit var repository: LibraryRepository
+    private lateinit var repository: ComicRepository
     private lateinit var addComicUseCase: AddComicUseCase
 
     @Before
@@ -23,15 +23,7 @@ class AddComicUseCaseTest {
     @Test
     fun `invoke should call repository addComic`() = runTest {
         // Given
-        val comic = ComicEntity(
-            id = "1",
-            title = "Test Comic",
-            filePath = "/path/to/comic",
-            coverPath = "/path/to/cover",
-            totalPages = 10,
-            currentPage = 0,
-            dateAdded = System.currentTimeMillis()
-        )
+        val comic = Comic(title = "Test Comic", author = "Unknown", filePath = "/path/to/comic", coverPath = "/path/to/cover")
 
         // When
         addComicUseCase.invoke(comic)
@@ -43,15 +35,7 @@ class AddComicUseCaseTest {
     @Test
     fun `invoke should propagate repository exceptions`() = runTest {
         // Given
-        val comic = ComicEntity(
-            id = "1",
-            title = "Test Comic",
-            filePath = "/path/to/comic",
-            coverPath = "/path/to/cover",
-            totalPages = 10,
-            currentPage = 0,
-            dateAdded = System.currentTimeMillis()
-        )
+        val comic = Comic(title = "Test Comic", author = "Unknown", filePath = "/path/to/comic", coverPath = "/path/to/cover")
         val exception = RuntimeException("Database error")
         coEvery { repository.addComic(comic) } throws exception
 
