@@ -100,8 +100,8 @@ private fun ComicRow(comic: Comic, onClick: () -> Unit) {
             .padding(vertical = 8.dp)
     ) {
         Text(text = comic.title)
-        if (!comic.coverPath.isNullOrEmpty()) {
-            Text(text = comic.coverPath!!, modifier = Modifier.padding(top = 2.dp))
+        if (comic.coverUrl != null) {
+            Text(text = comic.coverUrl.toString(), modifier = Modifier.padding(top = 2.dp))
         }
         HorizontalDivider(modifier = Modifier.padding(top = 8.dp))
     }

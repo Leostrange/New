@@ -75,7 +75,11 @@ fun MrComicApp() {
                 val navController = rememberNavController()
                 AppNavHost(
                     navController = navController,
-                    onOnboardingComplete = { /* no-op */ }
+                    onOnboardingComplete = { 
+                        navController.navigate("library") {
+                            popUpTo("onboarding") { inclusive = true }
+                        }
+                    }
                 )
             }
         }

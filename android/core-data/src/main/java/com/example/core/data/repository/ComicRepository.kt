@@ -27,6 +27,7 @@ interface ComicRepository {
     suspend fun deleteComics(comicIds: Set<String>)
     suspend fun addComic(comic: Comic)
     suspend fun updateProgress(comicId: String, currentPage: Int)
+    suspend fun getReadingProgress(comicId: String): Int
     suspend fun clearCache()
     suspend fun importComicFromUri(uri: android.net.Uri)
     suspend fun addBookmark(bookmark: Bookmark)
@@ -52,10 +53,11 @@ class ComicRepositoryImpl @Inject constructor(
         return comicsFlow.map { entities ->
             entities.map { entity ->
                 Comic(
+                    id = entity.id.toString(),
                     title = entity.title,
                     author = "Unknown", // Assuming author is not in ComicEntity for now
                     filePath = entity.filePath,
-                    coverPath = entity.coverPath
+                    coverUrl = entity.coverPath
                 )
             }
         }
@@ -142,6 +144,14 @@ class ComicRepositoryImpl @Inject constructor(
     override suspend fun updateProgress(comicId: String, currentPage: Int) {
         withContext(Dispatchers.IO) {
             comicDao.updateProgress(comicId)
+        }
+    }
+
+    override suspend fun getReadingProgress(comicId: String): Int {
+        return withContext(Dispatchers.IO) {
+            // For now, return 0 as a placeholder until we implement proper progress tracking
+            // In the future, this should query the database for the actual reading progress
+            0
         }
     }
 

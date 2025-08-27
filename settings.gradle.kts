@@ -32,9 +32,6 @@ include(":android:app")
 project(":android:app").projectDir = file("android/app")
 
 // Core modules
-include(":android:core")
-project(":android:core").projectDir = file("android/core")
-
 include(":android:core-analytics")
 project(":android:core-analytics").projectDir = file("android/core-analytics")
 
