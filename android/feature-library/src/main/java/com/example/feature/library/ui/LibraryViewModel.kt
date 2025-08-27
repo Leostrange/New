@@ -16,6 +16,12 @@ import javax.inject.Inject
 
 import java.util.UUID
 
+/**
+ * ViewModel for the Library screen
+ * Manages comic data, search, sorting, and user interactions
+ * 
+ * @property comicRepository Repository for comic data operations
+ */
 @HiltViewModel
 class LibraryViewModel @Inject constructor(
     private val comicRepository: ComicRepository
@@ -28,27 +34,39 @@ class LibraryViewModel @Inject constructor(
         observeComics()
     }
 
+    /**
+     * Observes comic data changes and updates UI state accordingly
+     * Handles sorting, searching, and filtering of comics
+     */
     private fun observeComics() {
         viewModelScope.launch {
-            _uiState.collectLatest { uiState ->
-                comicRepository.getComics(uiState.sortOrder, uiState.searchQuery).collectLatest { comics ->
-                    val visibleComics = comics.filter { comic ->
-                        comic.filePath !in uiState.pendingDeletionIds
-                    }
-                    
-                    _uiState.update { currentState ->
-                        currentState.copy(
-                            isLoading = false, 
-                            comics = comics,
-                            totalComicsCount = comics.size,
-                            visibleComicsCount = visibleComics.size
-                        )
+            // Collect UI state changes
+            _uiState.collect { uiState ->
+                // Launch a new coroutine for each state change to avoid nested collectLatest
+                launch {
+                    comicRepository.getComics(uiState.sortOrder, uiState.searchQuery).collect { comics ->
+                        val visibleComics = comics.filter { comic ->
+                            comic.filePath !in uiState.pendingDeletionIds
+                        }
+                        
+                        _uiState.update { currentState ->
+                            currentState.copy(
+                                isLoading = false, 
+                                comics = comics,
+                                totalComicsCount = comics.size,
+                                visibleComicsCount = visibleComics.size
+                            )
+                        }
                     }
                 }
             }
         }
     }
 
+    /**
+     * Handles permission grant and refreshes comic data
+     * Called when user grants necessary permissions for file access
+     */
     fun onPermissionsGranted() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
