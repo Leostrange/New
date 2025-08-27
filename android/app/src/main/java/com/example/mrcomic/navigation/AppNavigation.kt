@@ -10,9 +10,6 @@ import com.example.feature.settings.ui.SettingsScreen
 import com.example.feature.onboarding.OnboardingScreen
 import com.example.feature.reader.ui.ReaderScreen
 import com.example.feature.plugins.ui.PluginsScreen
-import java.net.URLEncoder
-import java.net.URLDecoder
-import java.nio.charset.StandardCharsets
 
 sealed class Screen(val route: String) {
     data object Library : Screen("library")
@@ -20,13 +17,13 @@ sealed class Screen(val route: String) {
     data object Plugins : Screen("plugins")
     data object Onboarding : Screen("onboarding")
     data object Reader : Screen("reader/{uri}") {
-        fun create(uri: String) = "reader/${URLEncoder.encode(uri, StandardCharsets.UTF_8.toString())}"
+        fun create(uri: String) = "reader/$uri"
     }
 }
 
 @Composable
 fun AppNavHost(navController: NavHostController, onOnboardingComplete: () -> Unit) {
-    NavHost(navController = navController, startDestination = Screen.Library.route) {
+    NavHost(navController = navController, startDestination = Screen.Onboarding.route) {
         composable(route = Screen.Library.route) {
             LibraryScreen(
                 onBookClick = { path -> navController.navigate(Screen.Reader.create(path)) },
@@ -50,19 +47,8 @@ fun AppNavHost(navController: NavHostController, onOnboardingComplete: () -> Uni
             OnboardingScreen(onOnboardingComplete = onOnboardingComplete)
         }
 
-            val uri = backStackEntry.arguments?.getString("uri") ?: ""
->>>>>>> 272fe1b6a2f2b204ff8ae2d9f7300f5160ae40e7
-            ReaderScreen()
-        }
         composable(route = Screen.Reader.route) { backStackEntry ->
-            val encodedUri = backStackEntry.arguments?.getString("uri") ?: ""
-            val uri = URLDecoder.decode(encodedUri, StandardCharsets.UTF_8.toString())
-            android.util.Log.d("Navigation", "📁 ReaderScreen URI: $uri")
-            ReaderScreen()
-        }
-=======
             val uri = backStackEntry.arguments?.getString("uri") ?: ""
->>>>>>> 272fe1b6a2f2b204ff8ae2d9f7300f5160ae40e7
             ReaderScreen()
         }
     }
