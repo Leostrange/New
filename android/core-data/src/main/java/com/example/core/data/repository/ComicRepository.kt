@@ -143,16 +143,31 @@ class ComicRepositoryImpl @Inject constructor(
 
     override suspend fun updateProgress(comicId: String, currentPage: Int) {
         withContext(Dispatchers.IO) {
-            comicDao.updateProgress(comicId)
+            // Properly update progress/currentPage when schema supports it
+            try {
+                comicDao.updateProgress(comicId, currentPage)
+            } catch (e: Exception) {
+                // Fallback to no-op if DAO doesn't yet have column; keep compatibility
+                android.util.Log.w("ComicRepository", "updateProgress not fully supported: ${e.message}")
+            }
         }
     }
 
+        // Without a dedicated column, infer 0; extend when schema adds currentPage
+        return 0
+>>>>>>> 272fe1b6a2f2b204ff8ae2d9f7300f5160ae40e7
+    }
     override suspend fun getReadingProgress(comicId: String): Int {
         return withContext(Dispatchers.IO) {
             // For now, return 0 as a placeholder until we implement proper progress tracking
             // In the future, this should query the database for the actual reading progress
             0
         }
+    }
+=======
+        // Without a dedicated column, infer 0; extend when schema adds currentPage
+        return 0
+>>>>>>> 272fe1b6a2f2b204ff8ae2d9f7300f5160ae40e7
     }
 
     override suspend fun clearCache() {

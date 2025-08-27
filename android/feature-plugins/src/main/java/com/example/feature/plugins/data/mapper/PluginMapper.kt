@@ -1,6 +1,6 @@
 package com.example.feature.plugins.data.mapper
 
-import com.example.feature.plugins.data.local.PluginEntity
+import com.example.core.data.database.plugins.PluginEntity
 import com.example.feature.plugins.model.*
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken

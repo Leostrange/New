@@ -50,10 +50,19 @@ fun AppNavHost(navController: NavHostController, onOnboardingComplete: () -> Uni
             OnboardingScreen(onOnboardingComplete = onOnboardingComplete)
         }
 
+            val uri = backStackEntry.arguments?.getString("uri") ?: ""
+>>>>>>> 272fe1b6a2f2b204ff8ae2d9f7300f5160ae40e7
+            ReaderScreen()
+        }
         composable(route = Screen.Reader.route) { backStackEntry ->
             val encodedUri = backStackEntry.arguments?.getString("uri") ?: ""
             val uri = URLDecoder.decode(encodedUri, StandardCharsets.UTF_8.toString())
             android.util.Log.d("Navigation", "📁 ReaderScreen URI: $uri")
+            ReaderScreen()
+        }
+=======
+            val uri = backStackEntry.arguments?.getString("uri") ?: ""
+>>>>>>> 272fe1b6a2f2b204ff8ae2d9f7300f5160ae40e7
             ReaderScreen()
         }
     }
