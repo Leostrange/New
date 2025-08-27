@@ -2,7 +2,6 @@ package com.example.core.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
@@ -33,7 +32,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.example.core.model.BottomNavItem
-import com.example.core.model.Comic
+import com.example.core.model.ComicBook
 import com.example.core.ui.theme.PaddingLarge
 import com.example.core.ui.theme.PaddingMedium
 
@@ -138,7 +137,7 @@ fun MrComicBottomAppBar(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ComicCoverCard(
-    comicBook: Comic,
+    comicBook: ComicBook,
     isSelected: Boolean,
     onClick: () -> Unit,
     onLongClick: () -> Unit,

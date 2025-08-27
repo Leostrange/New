@@ -50,7 +50,7 @@ fun ComicCoverCard(
         Column {
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(comic.coverUrl)
+                    .data(comic.coverPath)
                     .crossfade(true)
                     .build(),
                 placeholder = painterResource(R.drawable.ic_placeholder_cover),
