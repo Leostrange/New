@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -68,7 +69,7 @@ fun PluginsScreen(
                         Icon(Icons.Default.Refresh, contentDescription = "Обновить")
                     }
                     IconButton(onClick = { viewModel.openPluginStore() }) {
-                        Icon(Icons.Default.Store, contentDescription = "Магазин плагинов")
+                        Icon(Icons.Default.ShoppingCart, contentDescription = "Магазин плагинов")
                     }
                 }
             )
@@ -95,8 +96,9 @@ fun PluginsScreen(
                     )
                 }
                 uiState.error != null -> {
+                    val errorMessage = uiState.error ?: "Unknown error"
                     ErrorMessage(
-                        error = uiState.error,
+                        error = errorMessage,
                         onRetry = { viewModel.refreshPlugins() },
                         modifier = Modifier.align(Alignment.Center)
                     )
@@ -344,7 +346,7 @@ private fun ErrorMessage(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
-            Icons.Default.Error,
+            Icons.Default.Warning,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.error,
             modifier = Modifier.size(48.dp)
@@ -371,7 +373,7 @@ private fun EmptyState(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
-            Icons.Default.ExtensionOff,
+            Icons.Default.Extension,
             contentDescription = null,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(64.dp)
@@ -394,25 +396,25 @@ private fun EmptyState(
 // Вспомогательные функции
 
 private fun getCategoryIcon(category: PluginCategory) = when (category) {
-    PluginCategory.READER_ENHANCEMENT -> Icons.Default.AutoStories
-    PluginCategory.IMAGE_PROCESSING -> Icons.Default.Image
-    PluginCategory.TRANSLATION -> Icons.Default.Translate
-    PluginCategory.EXPORT -> Icons.Default.FileDownload
+    PluginCategory.READER_ENHANCEMENT -> Icons.Default.Book
+    PluginCategory.IMAGE_PROCESSING -> Icons.Default.Photo
+    PluginCategory.TRANSLATION -> Icons.Default.Language
+    PluginCategory.EXPORT -> Icons.Default.Download
     PluginCategory.UTILITY -> Icons.Default.Build
-    PluginCategory.THEME -> Icons.Default.Palette
-    PluginCategory.FORMAT_SUPPORT -> Icons.Default.Description
-    PluginCategory.INTEGRATION -> Icons.Default.Link
+    PluginCategory.THEME -> Icons.Default.ColorLens
+    PluginCategory.FORMAT_SUPPORT -> Icons.Default.Article
+    PluginCategory.INTEGRATION -> Icons.Default.Share
 }
 
 private fun getPermissionIcon(permission: PluginPermission) = when (permission) {
-    PluginPermission.READ_FILES -> Icons.Default.FolderOpen
-    PluginPermission.WRITE_FILES -> Icons.Default.Save
-    PluginPermission.NETWORK_ACCESS -> Icons.Default.Wifi
-    PluginPermission.CAMERA_ACCESS -> Icons.Default.Camera
+    PluginPermission.READ_FILES -> Icons.Default.Folder
+    PluginPermission.WRITE_FILES -> Icons.Default.Edit
+    PluginPermission.NETWORK_ACCESS -> Icons.Default.Public
+    PluginPermission.CAMERA_ACCESS -> Icons.Default.CameraAlt
     PluginPermission.STORAGE_ACCESS -> Icons.Default.Storage
     PluginPermission.SYSTEM_SETTINGS -> Icons.Default.Settings
-    PluginPermission.READER_CONTROL -> Icons.Default.MenuBook
-    PluginPermission.UI_MODIFICATION -> Icons.Default.Brush
+    PluginPermission.READER_CONTROL -> Icons.Default.Book
+    PluginPermission.UI_MODIFICATION -> Icons.Default.Edit
 }
 
 private fun getPermissionColor(permission: PluginPermission) = when (getRiskLevel(permission)) {

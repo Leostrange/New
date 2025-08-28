@@ -156,12 +156,12 @@ class LibraryViewModel @Inject constructor(
         }
     }
 
-    fun addComic(title: String, author: String, coverPath: String, filePath: String) {
+    fun addComic(title: String, author: String, coverUrl: String, filePath: String) {
         viewModelScope.launch(Dispatchers.IO) {
             val newComic = Comic(
                 title = title,
                 author = author,
-                coverPath = coverPath,
+                coverUrl = coverUrl,
                 filePath = filePath
             )
             comicRepository.addComic(newComic)

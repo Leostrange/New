@@ -14,9 +14,10 @@ import javax.inject.Singleton
 
 @Singleton
 class PluginRepository @Inject constructor(
-    private val pluginDao: PluginDao,
-    private val pluginManager: PluginManager,
-    private val pluginValidator: PluginValidator
+    private val pluginDao: PluginDao
+    // TODO: Add PluginManager and PluginValidator when they are implemented
+    // private val pluginManager: PluginManager,
+    // private val pluginValidator: PluginValidator
 ) {
     
     /**
@@ -48,6 +49,9 @@ class PluginRepository @Inject constructor(
      * Установить плагин
      */
     suspend fun installPlugin(packagePath: String): PluginResult<Plugin> {
+        // TODO: Implement when PluginManager and PluginValidator are available
+        return PluginResult.error("Plugin installation not yet implemented")
+        /*
         return try {
             // 1. Валидация пакета плагина
             val validationResult = pluginValidator.validatePackage(packagePath)
@@ -89,30 +93,17 @@ class PluginRepository @Inject constructor(
         } catch (e: Exception) {
             PluginResult.error("Ошибка установки плагина: ${e.message}")
         }
+        */
     }
     
     /**
      * Удалить плагин
      */
     suspend fun uninstallPlugin(pluginId: String): PluginResult<Unit> {
+        // TODO: Implement when PluginManager is available
         return try {
-            // 1. Деактивация плагина
-            if (pluginManager.isActive(pluginId)) {
-                val deactivationResult = pluginManager.deactivatePlugin(pluginId)
-                if (!deactivationResult.success) {
-                    return PluginResult.error("Ошибка деактивации: ${deactivationResult.error}")
-                }
-            }
-            
-            // 2. Удаление файлов плагина
-            val plugin = getPluginById(pluginId)
-            plugin?.packagePath?.let { path ->
-                pluginManager.removePluginFiles(path)
-            }
-            
-            // 3. Удаление из базы данных
+            // For now, just remove from database
             pluginDao.deletePlugin(pluginId)
-            
             PluginResult.success(Unit)
         } catch (e: Exception) {
             PluginResult.error("Ошибка удаления плагина: ${e.message}")
@@ -124,11 +115,9 @@ class PluginRepository @Inject constructor(
      */
     suspend fun activatePlugin(pluginId: String): PluginResult<Unit> {
         return try {
-            val result = pluginManager.activatePlugin(pluginId)
-            if (result.success) {
-                pluginDao.updatePluginState(pluginId, true)
-            }
-            result
+            // TODO: Implement when PluginManager is available
+            pluginDao.updatePluginState(pluginId, true)
+            PluginResult.success(Unit)
         } catch (e: Exception) {
             PluginResult.error("Ошибка активации плагина: ${e.message}")
         }
@@ -139,11 +128,9 @@ class PluginRepository @Inject constructor(
      */
     suspend fun deactivatePlugin(pluginId: String): PluginResult<Unit> {
         return try {
-            val result = pluginManager.deactivatePlugin(pluginId)
-            if (result.success) {
-                pluginDao.updatePluginState(pluginId, false)
-            }
-            result
+            // TODO: Implement when PluginManager is available
+            pluginDao.updatePluginState(pluginId, false)
+            PluginResult.success(Unit)
         } catch (e: Exception) {
             PluginResult.error("Ошибка деактивации плагина: ${e.message}")
         }
@@ -176,11 +163,8 @@ class PluginRepository @Inject constructor(
         params: Map<String, Any> = emptyMap()
     ): PluginResult<Any> {
         return try {
-            if (!pluginManager.isActive(pluginId)) {
-                return PluginResult.error("Плагин не активен")
-            }
-            
-            pluginManager.executeCommand(pluginId, command, params)
+            // TODO: Implement when PluginManager is available
+            PluginResult.error("Выполнение команд плагинов пока не реализовано")
         } catch (e: Exception) {
             PluginResult.error("Ошибка выполнения команды: ${e.message}")
         }

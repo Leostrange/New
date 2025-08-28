@@ -106,7 +106,7 @@ class PluginSandbox @Inject constructor(
                     try {
                         val result = gson.fromJson(resultJson, CommandResult::class.java)
                         if (result.success) {
-                            deferred.complete(PluginResult.success(result.data))
+                            deferred.complete(PluginResult.success(result.data ?: Unit))
                         } else {
                             deferred.complete(PluginResult.error(result.error ?: "Неизвестная ошибка"))
                         }

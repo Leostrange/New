@@ -59,6 +59,7 @@ dependencies {
     // Compose
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.bundles.compose)
+    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.lifecycle.runtime.compose)
     
@@ -69,6 +70,11 @@ dependencies {
     // Hilt DI
     implementation(libs.google.hilt.android)
     ksp(libs.google.hilt.compiler)
+    
+    // Room Database
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
     
     // Kotlin Coroutines
     implementation(libs.kotlinx.coroutines.android)

@@ -53,6 +53,7 @@ class ComicRepositoryImpl @Inject constructor(
         return comicsFlow.map { entities ->
             entities.map { entity ->
                 Comic(
+                    id = entity.id.toString(),
                     title = entity.title,
                     author = "Unknown", // Assuming author is not in ComicEntity for now
                     filePath = entity.filePath,
@@ -133,7 +134,7 @@ class ComicRepositoryImpl @Inject constructor(
             val comicEntity = ComicEntity(
                 filePath = comic.filePath,
                 title = comic.title,
-                coverPath = comic.coverPath,
+                coverPath = comic.coverUrl as? String,
                 dateAdded = System.currentTimeMillis()
             )
             comicDao.insertAll(listOf(comicEntity))
@@ -152,9 +153,22 @@ class ComicRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getReadingProgress(comicId: String): Int {
         // Without a dedicated column, infer 0; extend when schema adds currentPage
         return 0
+>>>>>>> 272fe1b6a2f2b204ff8ae2d9f7300f5160ae40e7
+    }
+    override suspend fun getReadingProgress(comicId: String): Int {
+        return withContext(Dispatchers.IO) {
+            // For now, return 0 as a placeholder until we implement proper progress tracking
+            // In the future, this should query the database for the actual reading progress
+            0
+        }
+    }
+    }
+=======
+        // Without a dedicated column, infer 0; extend when schema adds currentPage
+        return 0
+>>>>>>> 272fe1b6a2f2b204ff8ae2d9f7300f5160ae40e7
     }
 
     override suspend fun clearCache() {

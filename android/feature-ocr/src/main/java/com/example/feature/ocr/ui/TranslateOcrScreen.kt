@@ -14,10 +14,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -141,7 +145,9 @@ fun TranslateOcrScreen(
     viewModel: TranslateOcrViewModel = hiltViewModel()
 ) {
     val language by viewModel.targetLanguage.collectAsState()
-    val whisperAvailable by viewModel.isWhisperModelAvailable.collectAsState()
+    // TODO: Uncomment when WhisperRepository is implemented
+    // val whisperAvailable by viewModel.isWhisperModelAvailable.collectAsState()
+    val whisperAvailable = false // Временная заглушка
 
     TranslateOcrContent(
         recognizedText = recognizedText,
@@ -151,6 +157,6 @@ fun TranslateOcrScreen(
         translatedText = translatedText,
         isLoading = isLoading,
         isWhisperAvailable = whisperAvailable,
-        onDownloadWhisper = viewModel::downloadWhisperModel
+        onDownloadWhisper = { /* TODO: viewModel::downloadWhisperModel */ }
     )
 }

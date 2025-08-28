@@ -20,6 +20,10 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = libs.versions.kotlinCompilerExtension.get()
     }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
     kotlinOptions {
         jvmTarget = "17"
     }
@@ -29,9 +33,19 @@ dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.mlkit.text.recognition)
-    implementation(libs.mlkit.text.recognition.common)
+    
+    // Lifecycle
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    
+    // Hilt Navigation Compose
+    implementation(libs.androidx.hilt.navigation.compose)
+    
+    // TODO: Fix MLKit dependencies
+    // implementation(libs.mlkit.text.recognition)
+    // implementation(libs.mlkit.text.recognition.common)
     implementation(project(":android:shared"))
+    implementation(project(":android:core-data"))
 
     // Hilt
     implementation(libs.google.hilt.android)

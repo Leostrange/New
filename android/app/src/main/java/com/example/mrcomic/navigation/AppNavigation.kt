@@ -1,5 +1,6 @@
 package com.example.mrcomic.navigation
 
+import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -9,6 +10,9 @@ import com.example.feature.settings.ui.SettingsScreen
 import com.example.feature.onboarding.OnboardingScreen
 import com.example.feature.reader.ui.ReaderScreen
 import com.example.feature.plugins.ui.PluginsScreen
+import java.net.URLEncoder
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 
 /**
  * Navigation routes for the application
@@ -34,7 +38,7 @@ sealed class Screen(val route: String) {
          * @param uri The comic file path or identifier
          * @return Complete route string for navigation
          */
-        fun create(uri: String) = "reader/$uri"
+        fun create(uri: String) = "reader/${URLEncoder.encode(uri, StandardCharsets.UTF_8.toString())}"
     }
 }
 
@@ -74,12 +78,26 @@ fun AppNavHost(navController: NavHostController, onOnboardingComplete: () -> Uni
             OnboardingScreen(onOnboardingComplete = onOnboardingComplete)
         }
 
+            val encodedUri = backStackEntry.arguments?.getString("uri") ?: ""
+            val uri = URLDecoder.decode(encodedUri, StandardCharsets.UTF_8.toString())
+            android.util.Log.d("Navigation", "📁 ReaderScreen URI: $uri")
+            ReaderScreen()
+>>>>>>> 58d41db0 (Fix: Resolve all compilation errors and achieve green build)
         composable(route = Screen.Reader.route) { backStackEntry ->
-            val uri = backStackEntry.arguments?.getString("uri") ?: ""
+            val encodedUri = backStackEntry.arguments?.getString("uri") ?: ""
+            val uri = URLDecoder.decode(encodedUri, StandardCharsets.UTF_8.toString())
+            android.util.Log.d("Navigation", "📁 ReaderScreen URI: $uri")
             ReaderScreen(
                 comicUri = uri,
                 onNavigateBack = { navController.popBackStack() }
             )
+        }
+=======
+            val encodedUri = backStackEntry.arguments?.getString("uri") ?: ""
+            val uri = URLDecoder.decode(encodedUri, StandardCharsets.UTF_8.toString())
+            android.util.Log.d("Navigation", "📁 ReaderScreen URI: $uri")
+            ReaderScreen()
+>>>>>>> 58d41db0 (Fix: Resolve all compilation errors and achieve green build)
         }
     }
 }

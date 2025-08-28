@@ -5,7 +5,8 @@ import androidx.room.Room
 import com.example.core.data.database.AppDatabase
 import com.example.core.data.database.plugins.PluginDao
 import com.example.feature.plugins.data.repository.PluginRepository
-import com.example.feature.plugins.domain.*
+// TODO: Uncomment when plugin classes are implemented
+// import com.example.feature.plugins.domain.*
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,6 +23,7 @@ object PluginModule {
         return database.pluginDao()
     }
     
+    /*
     @Provides
     @Singleton
     fun providePluginManager(
@@ -52,14 +54,13 @@ object PluginModule {
     fun providePluginValidator(): PluginValidator {
         return PluginValidator()
     }
+    */
     
     @Provides
     @Singleton
     fun providePluginRepository(
-        pluginDao: PluginDao,
-        pluginManager: PluginManager,
-        pluginValidator: PluginValidator
+        pluginDao: PluginDao
     ): PluginRepository {
-        return PluginRepository(pluginDao, pluginManager, pluginValidator)
+        return PluginRepository(pluginDao)
     }
 }

@@ -39,15 +39,12 @@ abstract class DataModule {
 
     @Binds
     abstract fun bindWhisperRepository(impl: WhisperRepositoryImpl): WhisperRepository
-}
 
-@Module
-@InstallIn(SingletonComponent::class)
-object DataModule {
-
-	@Provides
-	@Singleton
-	fun provideLocalResourcesRepository(@ApplicationContext context: Context): LocalResourcesRepository {
-		return LocalResourcesRepositoryImpl(context)
-	}
+    companion object {
+        @Provides
+        @Singleton
+        fun provideLocalResourcesRepository(@ApplicationContext context: Context): LocalResourcesRepository {
+            return LocalResourcesRepositoryImpl(context)
+        }
+    }
 }
