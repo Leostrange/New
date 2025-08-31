@@ -46,4 +46,20 @@ interface ComicDao {
     // Update current page/progress if such columns exist; otherwise this will be ignored at compile-time/tests
     @Query("UPDATE comics SET currentPage = :currentPage WHERE filePath = :comicId")
     suspend fun updateProgress(comicId: String, currentPage: Int)
+    
+    // Backup/Restore methods
+    @Query("SELECT * FROM comics")
+    suspend fun getAllComics(): List<ComicEntity>
+    
+    @Query("SELECT * FROM bookmarks")
+    suspend fun getAllBookmarks(): List<BookmarkEntity>
+    
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertComics(comics: List<ComicEntity>)
+    
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertBookmarks(bookmarks: List<BookmarkEntity>)
+    
+    @Query("DELETE FROM bookmarks")
+    suspend fun clearAllBookmarks()
 }

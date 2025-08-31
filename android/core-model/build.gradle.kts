@@ -34,4 +34,7 @@ android {
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
+    
+    // Add Gson for JSON serialization
+    implementation(libs.google.gson)
 }

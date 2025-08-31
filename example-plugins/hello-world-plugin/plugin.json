@@ -1,0 +1,11 @@
+{
+  "id": "hello-world-plugin",
+  "name": "Hello World Plugin",
+  "version": "1.0.0",
+  "author": "Mr.Comic Team",
+  "description": "A simple plugin that demonstrates the plugin system capabilities",
+  "category": "UTILITY",
+  "type": "JAVASCRIPT",
+  "permissions": ["READ_FILES", "UI_MODIFICATION"],
+  "dependencies": []
+}

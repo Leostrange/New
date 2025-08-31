@@ -13,7 +13,8 @@ import javax.inject.Singleton
 
 @Singleton
 class PluginSandbox @Inject constructor(
-    private val gson: Gson
+    private val gson: Gson,
+    private val pluginApi: PluginApiImpl
 ) {
     
     /**
@@ -28,7 +29,7 @@ class PluginSandbox @Inject constructor(
             val deferred = CompletableDeferred<PluginResult<Unit>>()
             
             // Создание JavaScript интерфейса для взаимодействия
-            val jsInterface = PluginJavaScriptInterface(context, deferred)
+            val jsInterface = PluginJavaScriptInterface(context, deferred, pluginApi)
             webView.addJavascriptInterface(jsInterface, "MrComicAPI")
             
             webView.webViewClient = object : WebViewClient() {
@@ -207,40 +208,74 @@ class PluginSandbox @Inject constructor(
      */
     private class PluginJavaScriptInterface(
         private val context: PluginExecutionContext,
-        private val deferred: CompletableDeferred<PluginResult<Unit>>
+        private val deferred: CompletableDeferred<PluginResult<Unit>>,
+        private val pluginApi: PluginApiImpl
     ) {
         private val pluginStorage: MutableMap<String, MutableMap<String, String>> = mutableMapOf()
         
         @JavascriptInterface
         fun log(message: String) {
-            android.util.Log.d("Plugin[${context.pluginId}]", message)
+            pluginApi.log(message)
         }
         
         @JavascriptInterface
         fun executeSystemCommand(command: String, paramsJson: String): String? {
-            // Minimal secure stub: allow only whitelisted no-op commands
-            return when (command) {
-                "ping" -> "pong"
-                else -> null
+            try {
+                val params = Gson().fromJson(paramsJson, Map::class.java) as? Map<String, Any> ?: emptyMap()
+                // In a real implementation, this would be a suspending function call
+                // For now, we'll use the synchronous version
+                return when (command) {
+                    "ping" -> "pong"
+                    else -> null
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("Plugin[${context.pluginId}]", "Error executing system command: $command", e)
+                return null
             }
         }
         
         @JavascriptInterface
         fun getAppData(key: String): String? {
-            // Restricted: return null by default in sandbox
-            return null
+            try {
+                val data = pluginApi.getAppData(key)
+                return data?.toString()
+            } catch (e: Exception) {
+                android.util.Log.e("Plugin[${context.pluginId}]", "Error getting app data: $key", e)
+                return null
+            }
         }
         
         @JavascriptInterface
         fun setPluginData(key: String, value: String) {
-            val store = pluginStorage.getOrPut(context.pluginId) { mutableMapOf() }
-            store[key] = value
+            try {
+                val parsedValue = try {
+                    Gson().fromJson(value, Any::class.java)
+                } catch (e: Exception) {
+                    value // If JSON parsing fails, treat as string
+                }
+                pluginApi.setPluginData(key, parsedValue)
+            } catch (e: Exception) {
+                android.util.Log.e("Plugin[${context.pluginId}]", "Error setting plugin data: $key", e)
+            }
         }
         
         @JavascriptInterface
         fun getPluginData(key: String): String? {
-            val store = pluginStorage[context.pluginId]
-            return store?.get(key)
+            try {
+                val data = pluginApi.getPluginData(key)
+                return if (data != null) {
+                    try {
+                        Gson().toJson(data)
+                    } catch (e: Exception) {
+                        data.toString()
+                    }
+                } else {
+                    null
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("Plugin[${context.pluginId}]", "Error getting plugin data: $key", e)
+                return null
+            }
         }
         
         @JavascriptInterface

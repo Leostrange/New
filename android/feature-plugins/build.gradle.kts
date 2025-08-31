@@ -3,6 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
@@ -39,10 +40,7 @@ android {
     buildFeatures {
         compose = true
     }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.kotlinCompilerExtension.get()
-    }
+    // Removed composeOptions block as it's now handled by the Compose Compiler plugin
 }
 
 dependencies {
@@ -50,7 +48,6 @@ dependencies {
     implementation(project(":android:core-ui"))
     implementation(project(":android:core-model"))
     implementation(project(":android:core-data"))
-    implementation(project(":android:shared"))
 
     // Android Core
     implementation(libs.androidx.core.ktx)
@@ -81,6 +78,11 @@ dependencies {
     
     // JSON для конфигурации плагинов
     implementation(libs.google.gson)
+    
+    // Network and JSON parsing
+    implementation(libs.okhttp.logging.interceptor)
+    implementation(libs.retrofit.core)
+    implementation(libs.retrofit.converter.gson)
     
     // WebView для JavaScript плагинов
     implementation(libs.webkit)

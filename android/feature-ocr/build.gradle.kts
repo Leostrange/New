@@ -3,6 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
     id("com.google.dagger.hilt.android")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
@@ -17,9 +18,7 @@ android {
     buildFeatures {
         compose = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = libs.versions.kotlinCompilerExtension.get()
-    }
+    // Removed composeOptions block as it's now handled by the Compose Compiler plugin
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -41,15 +40,25 @@ dependencies {
     // Hilt Navigation Compose
     implementation(libs.androidx.hilt.navigation.compose)
     
-    // TODO: Fix MLKit dependencies
-    // implementation(libs.mlkit.text.recognition)
-    // implementation(libs.mlkit.text.recognition.common)
-    implementation(project(":android:shared"))
+    // MLKit Text Recognition
+    implementation(libs.mlkit.text.recognition)
+    implementation(libs.mlkit.text.recognition.common)
+    
+    // Core modules
     implementation(project(":android:core-data"))
+    implementation(project(":android:core-model"))
+    implementation(project(":android:core-ui"))
 
     // Hilt
     implementation(libs.google.hilt.android)
     ksp(libs.google.hilt.compiler)
+    
+    // Image processing for OCR
+    implementation(libs.coil.compose)
+    implementation(libs.exifinterface)
+    
+    // Network and JSON parsing
+    implementation(libs.okhttp.logging.interceptor)
+    implementation(libs.retrofit.core)
+    implementation(libs.retrofit.converter.gson)
 }
-
-

@@ -36,4 +36,6 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     implementation("androidx.documentfile:documentfile:1.0.1")
     implementation(libs.kotlinx.coroutines.android)
+    // Removed whisper-android and whisper-tflite dependencies that were causing build failures
+    // These libraries were not actually being used in the implementation
 }

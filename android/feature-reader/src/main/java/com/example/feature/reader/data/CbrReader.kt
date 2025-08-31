@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.graphics.BitmapFactory
 import com.example.feature.reader.domain.BookReader
+import com.example.core.reader.ImageOptimizer
 import com.github.junrar.Archive
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -13,9 +14,11 @@ import java.io.FileOutputStream
 
 /**
  * A [BookReader] implementation for reading CBR (RAR archive) files.
+ * Enhanced with memory-efficient loading for large files.
  */
 class CbrReader(
-    private val context: Context
+    private val context: Context,
+    private val imageOptimizer: ImageOptimizer? = null
 ) : BookReader {
 
     private var tempDir: File? = null
@@ -106,12 +109,38 @@ class CbrReader(
         }
         
         val path = pagePaths[pageIndex]
-        return runCatching { 
-            val bitmap = BitmapFactory.decodeFile(path)
-            if (bitmap == null) {
-                android.util.Log.w("CbrReader", "Failed to decode bitmap from: $path")
+        return runCatching {
+            // Use ImageOptimizer if available for better memory management
+            if (imageOptimizer != null) {
+                // Check if this is a large file and use appropriate optimization
+                val isLarge = imageOptimizer.isLargeFile(path)
+                val targetSize = if (isLarge) 1536 else 2048 // Smaller target for large files
+                
+                // Check memory pressure and adjust accordingly
+                val isUnderPressure = imageOptimizer.isUnderMemoryPressure()
+                
+                // Use coroutines in a blocking way for the suspended function
+                kotlinx.coroutines.runBlocking {
+                    // Manage cache based on memory pressure before loading
+                    if (isUnderPressure) {
+                        imageOptimizer.manageCacheBasedOnMemoryPressure()
+                    }
+                    
+                    // Use adaptive loading for better performance across different devices
+                    imageOptimizer.loadAdaptiveImage(
+                        imagePath = path,
+                        targetWidth = if (isUnderPressure) targetSize / 2 else targetSize,
+                        targetHeight = if (isUnderPressure) targetSize / 2 else targetSize
+                    )
+                }
+            } else {
+                // Fallback to basic BitmapFactory with some optimization
+                val options = BitmapFactory.Options().apply {
+                    inPreferredConfig = Bitmap.Config.RGB_565 // Save memory
+                    inMutable = false
+                }
+                BitmapFactory.decodeFile(path, options)
             }
-            bitmap
         }.getOrElse { e ->
             android.util.Log.e("CbrReader", "Error rendering page $pageIndex: ${e.message}", e)
             null

@@ -16,7 +16,8 @@ class PluginManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val gson: Gson,
     private val pluginSandbox: PluginSandbox,
-    private val permissionManager: PluginPermissionManager
+    private val permissionManager: PluginPermissionManager,
+    private val pluginApi: PluginApiImpl
 ) {
     
     // Реестр активных плагинов
@@ -231,6 +232,9 @@ class PluginManager @Inject constructor(
         command: String,
         params: Map<String, Any>
     ): PluginResult<Any> {
+        // Set the plugin context before executing the command
+        pluginApi.setPluginContext(plugin.metadata.id)
+        pluginApi.initializeForPlugin(plugin.metadata.id, plugin.context)
         return pluginSandbox.executeCommand(plugin.webView!!, command, params)
     }
     
@@ -239,6 +243,9 @@ class PluginManager @Inject constructor(
         command: String,
         params: Map<String, Any>
     ): PluginResult<Any> {
+        // Set the plugin context before executing the command
+        pluginApi.setPluginContext(plugin.metadata.id)
+        pluginApi.initializeForPlugin(plugin.metadata.id, plugin.context)
         // Выполнение нативной команды
         return PluginResult.error("Нативные команды пока не поддерживаются")
     }
@@ -248,6 +255,9 @@ class PluginManager @Inject constructor(
         command: String,
         params: Map<String, Any>
     ): PluginResult<Any> {
+        // Set the plugin context before executing the command
+        pluginApi.setPluginContext(plugin.metadata.id)
+        pluginApi.initializeForPlugin(plugin.metadata.id, plugin.context)
         // Выбор между JavaScript и нативным выполнением
         return executeJavaScriptCommand(plugin, command, params)
     }

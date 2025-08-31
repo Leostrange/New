@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Room
 import com.example.core.data.database.AppDatabase
 import com.example.core.data.database.ComicDao
+import com.example.core.data.database.BookmarkDao
+import com.example.core.data.database.NoteDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -22,11 +24,24 @@ object DatabaseModule {
             context,
             AppDatabase::class.java,
             "mr_comic_database"
-        ).build()
+        )
+        .addMigrations(*AppDatabase.getAllMigrations())
+        .fallbackToDestructiveMigration() // Only for development - remove in production
+        .build()
     }
 
     @Provides
     fun provideComicDao(appDatabase: AppDatabase): ComicDao {
         return appDatabase.comicDao()
+    }
+    
+    @Provides
+    fun provideBookmarkDao(appDatabase: AppDatabase): BookmarkDao {
+        return appDatabase.bookmarkDao()
+    }
+    
+    @Provides
+    fun provideNoteDao(appDatabase: AppDatabase): NoteDao {
+        return appDatabase.noteDao()
     }
 }

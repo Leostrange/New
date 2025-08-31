@@ -48,10 +48,19 @@ dependencies {
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
     
+    // Room
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+    
+    // Gson for JSON serialization
+    implementation(libs.google.gson)
+    
     // Testing
     testImplementation(libs.test.junit)
     testImplementation(libs.test.mockk)
     testImplementation(libs.test.kotlinx.coroutines)
+    testImplementation(libs.test.arch.core)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 }

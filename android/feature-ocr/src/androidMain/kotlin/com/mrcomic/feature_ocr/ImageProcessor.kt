@@ -3,7 +3,6 @@ package com.mrcomic.feature_ocr
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
-import com.mrcomic.shared.ImageProcessor
 import java.io.ByteArrayOutputStream
 
 actual class ImageProcessor {
@@ -96,5 +95,3 @@ actual class ImageProcessor {
         return noiseReducedBitmap
     }
 }
-
-

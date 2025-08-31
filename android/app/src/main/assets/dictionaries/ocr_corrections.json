@@ -3,31 +3,86 @@
     "japanese_common_mistakes": {
       "こんにちわ": "こんにちは",
       "ありがとうございました": "ありがとうございます",
-      "すいません": "すみません"
+      "すいません": "すみません",
+      "よろしくおねがいします": "よろしくお願いします",
+      "おつかれさま": "お疲れ様",
+      "おっす": "おはよう",
+      "おやすみ": "お休みなさい",
+      "いただきます": "頂きます",
+      "ごちそうさま": "ご馳走様"
     },
     "english_common_mistakes": {
       "teh": "the",
       "recieve": "receive",
       "seperate": "separate",
-      "definately": "definitely"
+      "definately": "definitely",
+      "occured": "occurred",
+      "existance": "existence",
+      "accomodate": "accommodate",
+      "maintainance": "maintenance",
+      "occurence": "occurrence",
+      "reciept": "receipt",
+      "wierd": "weird",
+      "neccessary": "necessary",
+      "embarass": "embarrass",
+      "excede": "exceed",
+      "milennium": "millennium",
+      "supercede": "supersede",
+      "calender": "calendar",
+      "reccomend": "recommend",
+      "occassion": "occasion",
+      "arguement": "argument"
     },
     "context_corrections": {
       "comic_specific": {
         "バン": "バーン",
         "ドカ": "ドカーン",
-        "ガシャ": "ガシャーン"
+        "ガシャ": "ガシャーン",
+        "バキ": "バキーン",
+        "ドン": "ドーン",
+        "ザッ": "ザーン",
+        "ギラ": "ギラーン",
+        "ピシ": "ピシッ",
+        "ズバ": "ズバーン",
+        "ガルル": "ガルルル"
+      },
+      "font_variations": {
+        "rn": "m",
+        "cl": "d",
+        "f": "t",
+        "i": "l",
+        "l": "i"
+      }
+    },
+    "ocr_specific_corrections": {
+      "common_ocr_errors": {
+        "B": "8",
+        "O": "0",
+        "l": "1",
+        "I": "1",
+        "Z": "2",
+        "S": "5",
+        "G": "6",
+        "B": "8",
+        "O": "0",
+        "rn": "m",
+        "cl": "d"
       }
     }
   },
   "confidence_adjustments": {
     "high_confidence_words": [
       "the", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by",
-      "は", "が", "を", "に", "で", "と", "から", "まで", "より", "へ"
+      "は", "が", "を", "に", "で", "と", "から", "まで", "より", "へ",
+      "a", "an", "is", "are", "was", "were", "be", "been", "have", "has", "had",
+      "do", "does", "did", "will", "would", "could", "should", "may", "might", "can"
     ],
     "low_confidence_patterns": [
       "^[0-9]+$",
-      "^[!@#$%^&*()]+$"
+      "^[!@#$%^&*()]+$",
+      "^.*[Il1|]{3,}.*$",
+      "^.*[O0]{2,}.*$",
+      "^.*[B8]{2,}.*$"
     ]
   }
 }
-

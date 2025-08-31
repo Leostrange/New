@@ -4,6 +4,8 @@ import com.example.core.data.database.plugins.PluginDao
 import com.example.core.data.database.plugins.PluginEntity
 import com.example.feature.plugins.data.mapper.toDomain
 import com.example.feature.plugins.data.mapper.toEntity
+import com.example.feature.plugins.domain.PluginManager
+import com.example.feature.plugins.domain.PluginValidator
 import com.example.feature.plugins.model.Plugin
 import com.example.feature.plugins.model.PluginResult
 import com.example.feature.plugins.model.PluginState
@@ -14,10 +16,9 @@ import javax.inject.Singleton
 
 @Singleton
 class PluginRepository @Inject constructor(
-    private val pluginDao: PluginDao
-    // TODO: Add PluginManager and PluginValidator when they are implemented
-    // private val pluginManager: PluginManager,
-    // private val pluginValidator: PluginValidator
+    private val pluginDao: PluginDao,
+    private val pluginManager: PluginManager,
+    private val pluginValidator: PluginValidator
 ) {
     
     /**
@@ -49,9 +50,6 @@ class PluginRepository @Inject constructor(
      * Установить плагин
      */
     suspend fun installPlugin(packagePath: String): PluginResult<Plugin> {
-        // TODO: Implement when PluginManager and PluginValidator are available
-        return PluginResult.error("Plugin installation not yet implemented")
-        /*
         return try {
             // 1. Валидация пакета плагина
             val validationResult = pluginValidator.validatePackage(packagePath)
@@ -93,17 +91,25 @@ class PluginRepository @Inject constructor(
         } catch (e: Exception) {
             PluginResult.error("Ошибка установки плагина: ${e.message}")
         }
-        */
     }
     
     /**
      * Удалить плагин
      */
     suspend fun uninstallPlugin(pluginId: String): PluginResult<Unit> {
-        // TODO: Implement when PluginManager is available
         return try {
-            // For now, just remove from database
+            // 1. Деактивация плагина, если он активен
+            pluginManager.deactivatePlugin(pluginId)
+            
+            // 2. Удаление файлов плагина
+            val plugin = getPluginById(pluginId)
+            if (plugin != null && plugin.packagePath != null) {
+                pluginManager.removePluginFiles(plugin.packagePath)
+            }
+            
+            // 3. Удаление из базы данных
             pluginDao.deletePlugin(pluginId)
+            
             PluginResult.success(Unit)
         } catch (e: Exception) {
             PluginResult.error("Ошибка удаления плагина: ${e.message}")
@@ -115,8 +121,15 @@ class PluginRepository @Inject constructor(
      */
     suspend fun activatePlugin(pluginId: String): PluginResult<Unit> {
         return try {
-            // TODO: Implement when PluginManager is available
+            // 1. Активация через PluginManager
+            val activationResult = pluginManager.activatePlugin(pluginId)
+            if (!activationResult.success) {
+                return PluginResult.error(activationResult.error ?: "Не удалось активировать плагин")
+            }
+            
+            // 2. Обновление состояния в базе данных
             pluginDao.updatePluginState(pluginId, true)
+            
             PluginResult.success(Unit)
         } catch (e: Exception) {
             PluginResult.error("Ошибка активации плагина: ${e.message}")
@@ -128,8 +141,15 @@ class PluginRepository @Inject constructor(
      */
     suspend fun deactivatePlugin(pluginId: String): PluginResult<Unit> {
         return try {
-            // TODO: Implement when PluginManager is available
+            // 1. Деактивация через PluginManager
+            val deactivationResult = pluginManager.deactivatePlugin(pluginId)
+            if (!deactivationResult.success) {
+                return PluginResult.error(deactivationResult.error ?: "Не удалось деактивировать плагин")
+            }
+            
+            // 2. Обновление состояния в базе данных
             pluginDao.updatePluginState(pluginId, false)
+            
             PluginResult.success(Unit)
         } catch (e: Exception) {
             PluginResult.error("Ошибка деактивации плагина: ${e.message}")
@@ -163,8 +183,14 @@ class PluginRepository @Inject constructor(
         params: Map<String, Any> = emptyMap()
     ): PluginResult<Any> {
         return try {
-            // TODO: Implement when PluginManager is available
-            PluginResult.error("Выполнение команд плагинов пока не реализовано")
+            // Выполнение команды через PluginManager
+            val result = pluginManager.executeCommand(pluginId, command, params)
+            
+            if (!result.success) {
+                return PluginResult.error(result.error ?: "Не удалось выполнить команду плагина")
+            }
+            
+            result
         } catch (e: Exception) {
             PluginResult.error("Ошибка выполнения команды: ${e.message}")
         }

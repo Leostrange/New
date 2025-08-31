@@ -7,6 +7,8 @@ import androidx.room.PrimaryKey
 data class ReaderStateEntity(
     @PrimaryKey val id: Int = 0,
     val comicTitle: String,
-    val page: Int
+    val page: Int,
+    val deviceId: String? = null,
+    val timestamp: Long = System.currentTimeMillis(),
+    val isSynced: Boolean = false
 )
-

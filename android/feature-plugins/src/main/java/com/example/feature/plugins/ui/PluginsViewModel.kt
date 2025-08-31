@@ -10,12 +10,24 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import android.content.Context
+import android.net.Uri
+import android.util.Log
+import androidx.core.content.FileProvider
+import java.io.File
+import java.io.FileOutputStream
+import java.io.InputStream
 
 @HiltViewModel
 class PluginsViewModel @Inject constructor(
     private val pluginRepository: PluginRepository,
-    private val permissionManager: PluginPermissionManager
+    private val permissionManager: PluginPermissionManager,
+    private val context: Context
 ) : ViewModel() {
+    
+    companion object {
+        private const val TAG = "PluginsViewModel"
+    }
     
     private val _uiState = MutableStateFlow(PluginsUiState())
     val uiState: StateFlow<PluginsUiState> = combine(
@@ -88,40 +100,60 @@ class PluginsViewModel @Inject constructor(
     }
     
     fun configurePlugin(plugin: Plugin) {
-        // TODO: Открыть экран конфигурации плагина
-        _uiState.update { it.copy(error = "Настройка плагинов пока не реализована") }
+        // In a real implementation, this would navigate to a plugin configuration screen
+        // For now, we'll just show a message that configuration is not yet implemented
+        _uiState.update { it.copy(error = "Настройка плагинов будет реализована в следующей версии") }
     }
     
     fun installPluginFromFile() {
-        // TODO: Открыть файловый диалог для выбора плагина
-        _uiState.update { it.copy(error = "Установка из файла пока не реализована") }
+        // In a real implementation, this would open a file picker dialog
+        // For now, we'll just show a message that file installation is not yet implemented
+        _uiState.update { it.copy(error = "Установка из файла будет реализована в следующей версии") }
     }
 
-    fun installPluginFromUri(uri: android.net.Uri) {
+    fun installPluginFromUri(uri: Uri) {
         viewModelScope.launch {
             try {
-                // Copy uri to local cache path and install
-                val cacheFile = java.io.File.createTempFile("plugin_", ".zip")
-                val context = androidx.lifecycle.SavedStateHandle()
-                // Fallback simple stream copy using application context from repository if available
-                // For now we call repository with path directly if content resolver not available here
-                val result = pluginRepository.installPlugin(uri.toString())
-                if (!result.success) {
-                    _uiState.update { it.copy(error = result.error) }
+                // Copy the file from the URI to a temporary location
+                val tempFile = copyUriToTempFile(uri)
+                if (tempFile != null) {
+                    // Install the plugin from the temporary file
+                    val result = pluginRepository.installPlugin(tempFile.absolutePath)
+                    if (result.success) {
+                        // Delete the temporary file after successful installation
+                        tempFile.delete()
+                        _uiState.update { it.copy(error = "Плагин успешно установлен") }
+                    } else {
+                        _uiState.update { it.copy(error = result.error) }
+                    }
+                } else {
+                    _uiState.update { it.copy(error = "Не удалось скопировать файл плагина") }
                 }
             } catch (e: Exception) {
+                Log.e(TAG, "Error installing plugin from URI", e)
                 _uiState.update { it.copy(error = "Ошибка установки плагина: ${e.message}") }
             }
         }
     }
 
+    private fun copyUriToTempFile(uri: Uri): File? {
+        return try {
+            val inputStream = context.contentResolver.openInputStream(uri)
+            inputStream?.use { stream ->
+                val tempFile = File.createTempFile("plugin_", ".zip", context.cacheDir)
+                FileOutputStream(tempFile).use { output ->
+                    stream.copyTo(output)
+                }
+                tempFile
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error copying URI to temp file", e)
+            null
+        }
+    }
+
     fun setError(message: String) {
         _uiState.update { it.copy(error = message) }
-    }
-    
-    fun openPluginStore() {
-        // TODO: Открыть магазин плагинов
-        _uiState.update { it.copy(error = "Магазин плагинов пока не реализован") }
     }
     
     fun grantPermissions(pluginId: String, permissions: List<PluginPermission>) {

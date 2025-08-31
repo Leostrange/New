@@ -41,5 +41,9 @@ interface PluginDao {
 
     @Query("SELECT COUNT(*) FROM plugins WHERE isEnabled = 1")
     suspend fun getActivePluginCount(): Int
+    
+    // Backup/Restore methods
+    @Query("SELECT * FROM plugins")
+    suspend fun getAllPluginsSync(): List<PluginEntity>
 }
 

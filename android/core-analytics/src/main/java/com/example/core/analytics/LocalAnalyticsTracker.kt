@@ -8,10 +8,12 @@ import javax.inject.Singleton
 
 /**
  * Локальная реализация аналитики для разработки и тестирования
- * Логирует события в Logcat вместо отправки на внешние сервисы
+ * Логирует события в Logcat и сохраняет их в локальное хранилище
  */
 @Singleton
-class LocalAnalyticsTracker @Inject constructor() : AnalyticsTracker {
+class LocalAnalyticsTracker @Inject constructor(
+    private val analyticsStorage: RoomAnalyticsStorage
+) : AnalyticsTracker {
     
     private var isTrackingEnabled = true
     private var currentUserId: String? = null
@@ -23,6 +25,9 @@ class LocalAnalyticsTracker @Inject constructor() : AnalyticsTracker {
 
     override suspend fun trackEvent(event: AnalyticsEvent) = withContext(Dispatchers.IO) {
         if (!isTrackingEnabled) return@withContext
+        
+        // Store event in database
+        analyticsStorage.saveEvent(event)
         
         val logMessage = buildString {
             append("📊 EVENT: ${event.eventName}")

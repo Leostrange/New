@@ -28,6 +28,9 @@ import android.net.Uri
 @Composable
 fun PluginsScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToPermissions: (Plugin) -> Unit,
+    onNavigateToStore: () -> Unit,
+    onNavigateToConfig: (Plugin) -> Unit,
     viewModel: PluginsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -68,7 +71,7 @@ fun PluginsScreen(
                     IconButton(onClick = { viewModel.refreshPlugins() }) {
                         Icon(Icons.Default.Refresh, contentDescription = "Обновить")
                     }
-                    IconButton(onClick = { viewModel.openPluginStore() }) {
+                    IconButton(onClick = { onNavigateToStore() }) {
                         Icon(Icons.Default.ShoppingCart, contentDescription = "Магазин плагинов")
                     }
                 }
@@ -113,7 +116,8 @@ fun PluginsScreen(
                         plugins = uiState.plugins,
                         onPluginToggle = { plugin -> viewModel.togglePlugin(plugin) },
                         onPluginUninstall = { plugin -> viewModel.uninstallPlugin(plugin) },
-                        onPluginConfigure = { plugin -> viewModel.configurePlugin(plugin) },
+                        onPluginConfigure = { plugin -> onNavigateToConfig(plugin) },
+                        onNavigateToPermissions = onNavigateToPermissions,
                         modifier = Modifier.fillMaxSize()
                     )
                 }
@@ -150,6 +154,7 @@ private fun PluginsList(
     onPluginToggle: (Plugin) -> Unit,
     onPluginUninstall: (Plugin) -> Unit,
     onPluginConfigure: (Plugin) -> Unit,
+    onNavigateToPermissions: (Plugin) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -162,7 +167,8 @@ private fun PluginsList(
                 plugin = plugin,
                 onToggle = { onPluginToggle(plugin) },
                 onUninstall = { onPluginUninstall(plugin) },
-                onConfigure = { onPluginConfigure(plugin) }
+                onConfigure = { onPluginConfigure(plugin) },
+                onNavigateToPermissions = onNavigateToPermissions
             )
         }
     }
@@ -175,6 +181,7 @@ private fun PluginCard(
     onToggle: () -> Unit,
     onUninstall: () -> Unit,
     onConfigure: () -> Unit,
+    onNavigateToPermissions: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -261,6 +268,21 @@ private fun PluginCard(
                         Spacer(modifier = Modifier.width(4.dp))
                         Text("Настроить")
                     }
+                }
+                
+                TextButton(
+                    onClick = onNavigateToPermissions,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.primary
+                    )
+                ) {
+                    Icon(
+                        Icons.Default.Security,
+                        contentDescription = null,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Разрешения")
                 }
                 
                 TextButton(

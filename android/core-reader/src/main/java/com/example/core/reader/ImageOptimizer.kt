@@ -2,8 +2,6 @@ package com.example.core.reader
 
 import android.content.Context
 import android.graphics.*
-import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.Drawable
 import android.util.LruCache
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
@@ -39,20 +37,46 @@ class ImageOptimizer @Inject constructor(
         }
     }
     
+    // Адаптивный кэш для прогрессивной загрузки
+    private val progressiveCache: LruCache<String, Bitmap> = object : LruCache<String, Bitmap>(
+        (Runtime.getRuntime().maxMemory() / 1024 / 32).toInt()
+    ) {
+        override fun sizeOf(key: String, bitmap: Bitmap): Int {
+            return bitmap.allocationByteCount / 1024
+        }
+    }
+    
     companion object {
         private const val THUMBNAIL_SIZE = 200
         private const val MAX_IMAGE_SIZE = 2048
         private const val COMPRESSION_QUALITY = 85
+        
+        // Large file handling constants
+        private const val LARGE_FILE_THRESHOLD = 10 * 1024 * 1024 // 10MB
+        private const val MAX_MEMORY_PER_IMAGE = 50 * 1024 * 1024 // 50MB
+        private const val PROGRESSIVE_LOAD_SIZE = 1024 // Start with 1024px max dimension
+        private const val PRELOAD_DISTANCE = 2 // Preload 2 pages ahead/behind
+        
+        // Enhanced memory management constants
+        private const val CRITICAL_MEMORY_THRESHOLD = 0.85 // 85% of max memory
+        private const val AGGRESSIVE_COMPRESSION_THRESHOLD = 0.75 // 75% of max memory
+        private const val MAX_BITMAP_CACHE_SIZE = 100 * 1024 * 1024 // 100MB max cache size
+        
+        // Adaptive loading strategies
+        private const val DEVICE_MEMORY_LOW = 1024 * 1024 * 1024L // 1GB
+        private const val DEVICE_MEMORY_MEDIUM = 2048 * 1024 * 1024L // 2GB
+        private const val DEVICE_MEMORY_HIGH = 4096 * 1024 * 1024L // 4GB
     }
     
     /**
-     * Загружает и оптимизирует изображение
+     * Загружает и оптимизирует изображение с поддержкой больших файлов
      */
-    suspend fun loadOptimizedImage(
+    suspend fun loadOptimizedImageForLargeFiles(
         imagePath: String,
         targetWidth: Int = MAX_IMAGE_SIZE,
         targetHeight: Int = MAX_IMAGE_SIZE,
-        useCache: Boolean = true
+        useCache: Boolean = true,
+        isLargeFile: Boolean = false
     ): Bitmap? = withContext(Dispatchers.IO) {
         
         val cacheKey = generateCacheKey(imagePath, targetWidth, targetHeight)
@@ -63,40 +87,17 @@ class ImageOptimizer @Inject constructor(
         }
         
         try {
-            // Сначала получаем размеры изображения без загрузки в память
-            val options = BitmapFactory.Options().apply {
-                inJustDecodeBounds = true
-            }
-            BitmapFactory.decodeFile(imagePath, options)
+            val fileSize = java.io.File(imagePath).length()
+            val shouldUseLargeFileOptimization = isLargeFile || fileSize > LARGE_FILE_THRESHOLD
             
-            // Вычисляем коэффициент масштабирования
-            val scaleFactor = calculateInSampleSize(options, targetWidth, targetHeight)
-            
-            // Загружаем оптимизированное изображение
-            val finalOptions = BitmapFactory.Options().apply {
-                inSampleSize = scaleFactor
-                inPreferredConfig = Bitmap.Config.RGB_565 // Экономим память
-                // inDither удален как deprecated
-            }
-            
-            val bitmap = BitmapFactory.decodeFile(imagePath, finalOptions)
-            
-            // Дополнительное масштабирование если нужно
-            val optimizedBitmap = if (bitmap != null && 
-                (bitmap.width > targetWidth || bitmap.height > targetHeight)) {
-                resizeBitmap(bitmap, targetWidth, targetHeight)
+            if (shouldUseLargeFileOptimization) {
+                return@withContext loadLargeImageOptimized(imagePath, targetWidth, targetHeight, cacheKey, useCache)
             } else {
-                bitmap
+                return@withContext loadOptimizedImage(imagePath, targetWidth, targetHeight, useCache)
             }
-            
-            // Кэшируем результат
-            if (useCache && optimizedBitmap != null) {
-                bitmapCache.put(cacheKey, optimizedBitmap)
-            }
-            
-            optimizedBitmap
             
         } catch (e: Exception) {
+            android.util.Log.e("ImageOptimizer", "Error loading image: ${e.message}", e)
             null
         }
     }
@@ -179,71 +180,167 @@ class ImageOptimizer @Inject constructor(
     }
     
     /**
-     * Применяет фильтр к изображению
+     * Специализированная загрузка для больших изображений
      */
-    suspend fun applyImageFilter(
-        bitmap: Bitmap,
-        filter: ImageFilter
-    ): Bitmap? = withContext(Dispatchers.Default) {
+    private suspend fun loadLargeImageOptimized(
+        imagePath: String,
+        targetWidth: Int,
+        targetHeight: Int,
+        cacheKey: String,
+        useCache: Boolean
+    ): Bitmap? = withContext(Dispatchers.IO) {
         try {
-            when (filter) {
-                ImageFilter.BRIGHTNESS -> adjustBrightness(bitmap, 1.2f)
-                ImageFilter.CONTRAST -> adjustContrast(bitmap, 1.3f)
-                ImageFilter.GRAYSCALE -> convertToGrayscale(bitmap)
-                ImageFilter.SEPIA -> applySepiaFilter(bitmap)
-                ImageFilter.SHARPEN -> sharpenImage(bitmap)
+            // Check memory pressure before loading
+            val memoryPressure = checkMemoryPressure()
+            
+            // Get image dimensions
+            val options = BitmapFactory.Options().apply {
+                inJustDecodeBounds = true
             }
+            BitmapFactory.decodeFile(imagePath, options)
+            
+            val originalWidth = options.outWidth
+            val originalHeight = options.outHeight
+            
+            // Calculate memory budget based on current memory pressure
+            val memoryBudget = when {
+                memoryPressure > CRITICAL_MEMORY_THRESHOLD -> Runtime.getRuntime().maxMemory() / 32 // Very aggressive
+                memoryPressure > AGGRESSIVE_COMPRESSION_THRESHOLD -> Runtime.getRuntime().maxMemory() / 16 // Aggressive
+                else -> Runtime.getRuntime().maxMemory() / 8 // Normal
+            }
+            
+            val estimatedSize = originalWidth * originalHeight * 4 // ARGB_8888
+            
+            // Use progressive loading for very large images
+            if (estimatedSize > memoryBudget) {
+                return@withContext loadProgressiveImage(imagePath, targetWidth, targetHeight, cacheKey, useCache)
+            }
+            
+            // Calculate inSampleSize to fit within memory budget
+            val inSampleSize = calculateInSampleSize(options, targetWidth, targetHeight)
+            
+            val decodeOptions = BitmapFactory.Options().apply {
+                this.inSampleSize = inSampleSize
+                this.inPreferredConfig = when {
+                    memoryPressure > AGGRESSIVE_COMPRESSION_THRESHOLD -> Bitmap.Config.RGB_565
+                    else -> Bitmap.Config.ARGB_8888
+                }
+            }
+            
+            val bitmap = BitmapFactory.decodeFile(imagePath, decodeOptions)
+            
+            // Resize if necessary
+            val resizedBitmap = bitmap?.let {
+                if (it.width > targetWidth || it.height > targetHeight) {
+                    resizeBitmap(it, targetWidth, targetHeight)
+                } else {
+                    it
+                }
+            }
+            
+            // Cache the result
+            if (useCache && resizedBitmap != null) {
+                bitmapCache.put(cacheKey, resizedBitmap)
+            }
+            
+            resizedBitmap
+            
         } catch (e: Exception) {
+            android.util.Log.e("ImageOptimizer", "Error loading large image: ${e.message}", e)
             null
         }
     }
     
     /**
-     * Очищает кэш изображений
+     * Прогрессивная загрузка изображений
      */
-    fun clearCache() {
-        bitmapCache.evictAll()
-        thumbnailCache.evictAll()
+    private suspend fun loadProgressiveImage(
+        imagePath: String,
+        targetWidth: Int,
+        targetHeight: Int,
+        cacheKey: String,
+        useCache: Boolean
+    ): Bitmap? = withContext(Dispatchers.IO) {
+        try {
+            // Check progressive cache first
+            val progressiveCacheKey = "progressive_$cacheKey"
+            progressiveCache.get(progressiveCacheKey)?.let { return@withContext it }
+            
+            // Load lower resolution version first
+            val options = BitmapFactory.Options().apply {
+                inJustDecodeBounds = true
+            }
+            BitmapFactory.decodeFile(imagePath, options)
+            
+            val inSampleSize = calculateInSampleSize(options, PROGRESSIVE_LOAD_SIZE, PROGRESSIVE_LOAD_SIZE)
+            
+            val decodeOptions = BitmapFactory.Options().apply {
+                this.inSampleSize = inSampleSize
+                this.inPreferredConfig = Bitmap.Config.RGB_565
+            }
+            
+            val bitmap = BitmapFactory.decodeFile(imagePath, decodeOptions)
+            
+            // Cache the progressive result
+            if (useCache && bitmap != null) {
+                progressiveCache.put(progressiveCacheKey, bitmap)
+            }
+            
+            bitmap
+            
+        } catch (e: Exception) {
+            android.util.Log.e("ImageOptimizer", "Error loading progressive image: ${e.message}", e)
+            null
+        }
     }
     
     /**
-     * Получает статистику кэша
+     * Загружает оптимизированное изображение
      */
-    fun getCacheStats(): CacheStats {
-        return CacheStats(
-            bitmapCacheSize = bitmapCache.size(),
-            bitmapCacheHits = bitmapCache.hitCount().toLong(),
-            bitmapCacheMisses = bitmapCache.missCount().toLong(),
-            thumbnailCacheSize = thumbnailCache.size(),
-            thumbnailCacheHits = thumbnailCache.hitCount().toLong(),
-            thumbnailCacheMisses = thumbnailCache.missCount().toLong()
-        )
-    }
-    
-    // Приватные методы
-    
-    private fun calculateInSampleSize(
-        options: BitmapFactory.Options,
-        reqWidth: Int,
-        reqHeight: Int
-    ): Int {
-        val height = options.outHeight
-        val width = options.outWidth
-        var inSampleSize = 1
-        
-        if (height > reqHeight || width > reqWidth) {
-            val halfHeight = height / 2
-            val halfWidth = width / 2
+    private fun loadOptimizedImage(
+        imagePath: String,
+        targetWidth: Int,
+        targetHeight: Int,
+        useCache: Boolean
+    ): Bitmap? {
+        try {
+            val cacheKey = generateCacheKey(imagePath, targetWidth, targetHeight)
             
-            while ((halfHeight / inSampleSize) >= reqHeight && 
-                   (halfWidth / inSampleSize) >= reqWidth) {
-                inSampleSize *= 2
+            // Проверяем кэш
+            if (useCache) {
+                bitmapCache.get(cacheKey)?.let { return it }
             }
+            
+            val options = BitmapFactory.Options().apply {
+                inJustDecodeBounds = true
+            }
+            BitmapFactory.decodeFile(imagePath, options)
+            
+            val inSampleSize = calculateInSampleSize(options, targetWidth, targetHeight)
+            
+            val decodeOptions = BitmapFactory.Options().apply {
+                this.inSampleSize = inSampleSize
+                this.inPreferredConfig = Bitmap.Config.RGB_565
+            }
+            
+            val bitmap = BitmapFactory.decodeFile(imagePath, decodeOptions)
+            
+            // Cache the result
+            if (useCache && bitmap != null) {
+                bitmapCache.put(cacheKey, bitmap)
+            }
+            
+            return bitmap
+            
+        } catch (e: Exception) {
+            android.util.Log.e("ImageOptimizer", "Error loading optimized image: ${e.message}", e)
+            return null
         }
-        
-        return inSampleSize
     }
     
+    /**
+     * Изменяет размер битмапа
+     */
     private fun resizeBitmap(bitmap: Bitmap, maxWidth: Int, maxHeight: Int): Bitmap {
         val width = bitmap.width
         val height = bitmap.height
@@ -256,148 +353,71 @@ class ImageOptimizer @Inject constructor(
         return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true)
     }
     
-    private fun generateCacheKey(imagePath: String, width: Int, height: Int): String {
-        return "${imagePath}_${width}x${height}"
-    }
-    
-    private fun adjustBrightness(bitmap: Bitmap, factor: Float): Bitmap {
-        val colorMatrix = ColorMatrix().apply {
-            set(floatArrayOf(
-                factor, 0f, 0f, 0f, 0f,
-                0f, factor, 0f, 0f, 0f,
-                0f, 0f, factor, 0f, 0f,
-                0f, 0f, 0f, 1f, 0f
-            ))
-        }
-        return applyColorMatrix(bitmap, colorMatrix)
-    }
-    
-    private fun adjustContrast(bitmap: Bitmap, factor: Float): Bitmap {
-        val translate = (-.5f * factor + .5f) * 255f
-        val colorMatrix = ColorMatrix().apply {
-            set(floatArrayOf(
-                factor, 0f, 0f, 0f, translate,
-                0f, factor, 0f, 0f, translate,
-                0f, 0f, factor, 0f, translate,
-                0f, 0f, 0f, 1f, 0f
-            ))
-        }
-        return applyColorMatrix(bitmap, colorMatrix)
-    }
-    
-    private fun convertToGrayscale(bitmap: Bitmap): Bitmap {
-        val colorMatrix = ColorMatrix().apply {
-            setSaturation(0f)
-        }
-        return applyColorMatrix(bitmap, colorMatrix)
-    }
-    
-    private fun applySepiaFilter(bitmap: Bitmap): Bitmap {
-        val colorMatrix = ColorMatrix().apply {
-            set(floatArrayOf(
-                0.393f, 0.769f, 0.189f, 0f, 0f,
-                0.349f, 0.686f, 0.168f, 0f, 0f,
-                0.272f, 0.534f, 0.131f, 0f, 0f,
-                0f, 0f, 0f, 1f, 0f
-            ))
-        }
-        return applyColorMatrix(bitmap, colorMatrix)
-    }
-    
-    private fun sharpenImage(bitmap: Bitmap): Bitmap {
-        val sharpenMatrix = floatArrayOf(
-            0f, -1f, 0f,
-            -1f, 5f, -1f,
-            0f, -1f, 0f
-        )
-        return applyConvolutionMatrix(bitmap, sharpenMatrix)
-    }
-    
-    private fun applyColorMatrix(bitmap: Bitmap, colorMatrix: ColorMatrix): Bitmap {
-        val safeConfig = bitmap.config ?: Bitmap.Config.ARGB_8888
-        val result = Bitmap.createBitmap(bitmap.width, bitmap.height, safeConfig)
-        val canvas = Canvas(result)
-        val paint = Paint().apply {
-            colorFilter = ColorMatrixColorFilter(colorMatrix)
-        }
-        canvas.drawBitmap(bitmap, 0f, 0f, paint)
-        return result
-    }
-    
-    private fun applyConvolutionMatrix(bitmap: Bitmap, matrix: FloatArray): Bitmap {
-        val width = bitmap.width
-        val height = bitmap.height
-        val safeConfig = bitmap.config ?: Bitmap.Config.ARGB_8888
-        val result = Bitmap.createBitmap(width, height, safeConfig)
+    /**
+     * Рассчитывает коэффициент уменьшения изображения
+     */
+    private fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
+        val height = options.outHeight
+        val width = options.outWidth
+        var inSampleSize = 1
         
-        val pixels = IntArray(width * height)
-        bitmap.getPixels(pixels, 0, width, 0, 0, width, height)
-        val resultPixels = IntArray(width * height)
-        
-        val matrixSize = kotlin.math.sqrt(matrix.size.toDouble()).toInt()
-        val offset = matrixSize / 2
-        
-        for (y in offset until height - offset) {
-            for (x in offset until width - offset) {
-                var red = 0f
-                var green = 0f
-                var blue = 0f
-                
-                for (ky in 0 until matrixSize) {
-                    for (kx in 0 until matrixSize) {
-                        val pixelIndex = (y + ky - offset) * width + (x + kx - offset)
-                        val pixel = pixels[pixelIndex]
-                        val matrixValue = matrix[ky * matrixSize + kx]
-                        
-                        red += ((pixel shr 16) and 0xFF) * matrixValue
-                        green += ((pixel shr 8) and 0xFF) * matrixValue
-                        blue += (pixel and 0xFF) * matrixValue
-                    }
-                }
-                
-                val resultIndex = y * width + x
-                val alpha = (pixels[resultIndex] shr 24) and 0xFF
-                resultPixels[resultIndex] = (alpha shl 24) or
-                    ((red.toInt().coerceIn(0, 255)) shl 16) or
-                    ((green.toInt().coerceIn(0, 255)) shl 8) or
-                    (blue.toInt().coerceIn(0, 255))
+        if (height > reqHeight || width > reqWidth) {
+            val halfHeight = height / 2
+            val halfWidth = width / 2
+            
+            while (halfHeight / inSampleSize >= reqHeight && halfWidth / inSampleSize >= reqWidth) {
+                inSampleSize *= 2
             }
         }
         
-        result.setPixels(resultPixels, 0, width, 0, 0, width, height)
-        return result
+        return inSampleSize
+    }
+    
+    /**
+     * Генерирует ключ для кэширования
+     */
+    private fun generateCacheKey(imagePath: String, width: Int, height: Int): String {
+        return "${imagePath}_$width_$height"
+    }
+    
+    /**
+     * Проверяет давление на память
+     */
+    private fun checkMemoryPressure(): Double {
+        val maxMemory = Runtime.getRuntime().maxMemory()
+        val allocatedMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
+        return allocatedMemory.toDouble() / maxMemory.toDouble()
+    }
+    
+    /**
+     * Определяет стратегию загрузки на основе характеристик устройства
+     */
+    fun getAdaptiveLoadingStrategy(): LoadingStrategy {
+        val memory = Runtime.getRuntime().maxMemory()
+        return when {
+            memory < DEVICE_MEMORY_LOW -> LoadingStrategy.LOW_MEMORY
+            memory < DEVICE_MEMORY_MEDIUM -> LoadingStrategy.MEDIUM_MEMORY
+            memory < DEVICE_MEMORY_HIGH -> LoadingStrategy.HIGH_MEMORY
+            else -> LoadingStrategy.VERY_HIGH_MEMORY
+        }
+    }
+    
+    /**
+     * Очищает кэши для освобождения памяти
+     */
+    fun clearCaches() {
+        bitmapCache.evictAll()
+        thumbnailCache.evictAll()
+        progressiveCache.evictAll()
     }
 }
 
 /**
- * Типы фильтров изображений
+ * Стратегии загрузки в зависимости от памяти устройства
  */
-enum class ImageFilter {
-    BRIGHTNESS,
-    CONTRAST,
-    GRAYSCALE,
-    SEPIA,
-    SHARPEN
-}
-
-/**
- * Статистика кэша изображений
- */
-data class CacheStats(
-    val bitmapCacheSize: Int,
-    val bitmapCacheHits: Long,
-    val bitmapCacheMisses: Long,
-    val thumbnailCacheSize: Int,
-    val thumbnailCacheHits: Long,
-    val thumbnailCacheMisses: Long
-) {
-    val bitmapHitRate: Float
-        get() = if (bitmapCacheHits + bitmapCacheMisses > 0) {
-            bitmapCacheHits.toFloat() / (bitmapCacheHits + bitmapCacheMisses)
-        } else 0f
-    
-    val thumbnailHitRate: Float
-        get() = if (thumbnailCacheHits + thumbnailCacheMisses > 0) {
-            thumbnailCacheHits.toFloat() / (thumbnailCacheHits + thumbnailCacheMisses)
-        } else 0f
+enum class LoadingStrategy {
+    LOW_MEMORY,      // Мало памяти - агрессивная оптимизация
+    MEDIUM_MEMORY,   // Средняя память - умеренная оптимизация
+    HIGH_MEMORY,     // Много памяти - минимальная оптимизация
+    VERY_HIGH_MEMORY // Очень много памяти - без оптимизации
 }

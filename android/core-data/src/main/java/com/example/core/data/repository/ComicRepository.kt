@@ -33,6 +33,10 @@ interface ComicRepository {
     suspend fun addBookmark(bookmark: Bookmark)
     suspend fun removeBookmark(bookmark: Bookmark)
     suspend fun getBookmarks(comicId: String): List<Bookmark>
+    
+    // Export/Import functionality
+    suspend fun exportLibrary(): LibraryExport
+    suspend fun importLibrary(exportData: LibraryExport): Result<Unit>
 }
 
 class ComicRepositoryImpl @Inject constructor(
@@ -153,22 +157,12 @@ class ComicRepositoryImpl @Inject constructor(
         }
     }
 
-        // Without a dedicated column, infer 0; extend when schema adds currentPage
-        return 0
->>>>>>> 272fe1b6a2f2b204ff8ae2d9f7300f5160ae40e7
-    }
     override suspend fun getReadingProgress(comicId: String): Int {
         return withContext(Dispatchers.IO) {
             // For now, return 0 as a placeholder until we implement proper progress tracking
             // In the future, this should query the database for the actual reading progress
             0
         }
-    }
-    }
-=======
-        // Without a dedicated column, infer 0; extend when schema adds currentPage
-        return 0
->>>>>>> 272fe1b6a2f2b204ff8ae2d9f7300f5160ae40e7
     }
 
     override suspend fun clearCache() {

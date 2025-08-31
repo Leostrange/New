@@ -21,20 +21,43 @@ import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
 import android.util.Base64; // Для base64
 
+import com.mrcomic.plugins.security.PluginPermissionManager; // Добавляем импорт менеджера разрешений
+
 public class AndroidPluginBridge {
     private static final String TAG_PREFIX = "JsPlugin-";
     private Context context;
     private String pluginId;
     private WebView webView; // Ссылка на WebView для вызова evaluateJavascript
     private Handler mainHandler;
+    private PluginPermissionManager pluginPermissionManager; // Добавляем менеджер разрешений
 
     public AndroidPluginBridge(Context context, String pluginId, WebView webView) {
         this.context = context.getApplicationContext();
         this.pluginId = pluginId;
         this.webView = webView;
         this.mainHandler = new Handler(Looper.getMainLooper());
+        this.pluginPermissionManager = new PluginPermissionManager(); // Инициализируем менеджер разрешений
     }
-
+    
+    // Интерфейс для взаимодействия с приложением
+    public interface PluginApi {
+        JSONObject getCurrentComicInfo() throws JSONException;
+        boolean navigateToComic(String comicId);
+        JSONObject getComicMetadata(String comicId) throws JSONException;
+        JSONObject getCurrentPageInfo() throws JSONException;
+        boolean navigateToPage(int pageNumber);
+        int getPageCount();
+        JSONObject getCurrentReaderSettings() throws JSONException;
+        boolean updateReaderSettings(JSONObject settings);
+    }
+    
+    // Установка API для взаимодействия с приложением
+    private PluginApi pluginApi;
+    
+    public void setPluginApi(PluginApi pluginApi) {
+        this.pluginApi = pluginApi;
+    }
+    
     private SharedPreferences getPluginPreferences() {
         return context.getSharedPreferences("plugin_settings_" + pluginId, Context.MODE_PRIVATE);
     }
@@ -85,7 +108,6 @@ public class AndroidPluginBridge {
 
     @JavascriptInterface
     public void logMessage(String pluginIdFromJs, String level, String message) {
-        // ... (реализация без изменений)
         String logTag = TAG_PREFIX + this.pluginId;
         if (!this.pluginId.equals(pluginIdFromJs)) {
             Log.w(logTag, "pluginId mismatch in logMessage. Expected: " + this.pluginId + ", Got: " + pluginIdFromJs);
@@ -100,7 +122,6 @@ public class AndroidPluginBridge {
 
     @JavascriptInterface
     public void showToast(String pluginIdFromJs, String message, int duration) {
-        // ... (реализация без изменений)
         final String toastMessage = "[" + this.pluginId + "] " + message;
         final int toastDuration = (duration == Toast.LENGTH_LONG) ? Toast.LENGTH_LONG : Toast.LENGTH_SHORT;
         mainHandler.post(() -> Toast.makeText(context, toastMessage, toastDuration).show());
@@ -115,7 +136,11 @@ public class AndroidPluginBridge {
             runJsCallback(callbackId, false, createErrorJson("permission_denied", "Plugin ID mismatch."));
             return;
         }
-        // TODO: Проверка разрешений 'read_settings' для pluginId
+        // Проверка разрешений 'read_settings' для pluginId
+        if (!pluginPermissionManager.hasPermission(pluginId, "read_settings")) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Missing read_settings permission."));
+            return;
+        }
         try {
             SharedPreferences prefs = getPluginPreferences();
             String valueJson = prefs.getString(key, defaultValueJson); // defaultValueJson уже строка JSON
@@ -133,7 +158,11 @@ public class AndroidPluginBridge {
             runJsCallback(callbackId, false, createErrorJson("permission_denied", "Plugin ID mismatch."));
             return;
         }
-        // TODO: Проверка разрешений 'write_settings' для pluginId
+        // Проверка разрешений 'write_settings' для pluginId
+        if (!pluginPermissionManager.hasPermission(pluginId, "write_settings")) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Missing write_settings permission."));
+            return;
+        }
         try {
             SharedPreferences prefs = getPluginPreferences();
             prefs.edit().putString(key, valueJson).apply();
@@ -151,7 +180,11 @@ public class AndroidPluginBridge {
             runJsCallback(callbackId, false, createErrorJson("permission_denied", "Plugin ID mismatch."));
             return;
         }
-        // TODO: Проверка разрешений 'write_settings' для pluginId
+        // Проверка разрешений 'write_settings' для pluginId
+        if (!pluginPermissionManager.hasPermission(pluginId, "write_settings")) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Missing write_settings permission."));
+            return;
+        }
         try {
             SharedPreferences prefs = getPluginPreferences();
             prefs.edit().remove(key).apply();
@@ -185,7 +218,11 @@ public class AndroidPluginBridge {
     public void fsReadFile(String pluginIdFromJs, String path, String callbackId) {
         Log.d(TAG_PREFIX + pluginId, "fsReadFile called for path: " + path + " cbId: " + callbackId);
         if (!this.pluginId.equals(pluginIdFromJs)) { /* ... ошибка ... */ runJsCallback(callbackId, false, createErrorJson("permission_denied", "Plugin ID mismatch.")); return; }
-        // TODO: Проверка 'read_file'
+        // Проверка 'read_file'
+        if (!pluginPermissionManager.hasPermission(pluginId, "read_file")) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Missing read_file permission."));
+            return;
+        }
         try {
             File file = getSafePluginFile(path);
             if (file.exists() && file.isFile()) {
@@ -246,7 +283,11 @@ public class AndroidPluginBridge {
     public void fsWriteFile(String pluginIdFromJs, String path, String dataString, String encoding, String callbackId) {
         Log.d(TAG_PREFIX + pluginId, "fsWriteFile called for path: " + path + " cbId: " + callbackId);
          if (!this.pluginId.equals(pluginIdFromJs)) { /* ... ошибка ... */ runJsCallback(callbackId, false, createErrorJson("permission_denied", "Plugin ID mismatch.")); return; }
-        // TODO: Проверка 'write_file'
+        // Проверка 'write_file'
+        if (!pluginPermissionManager.hasPermission(pluginId, "write_file")) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Missing write_file permission."));
+            return;
+        }
         try {
             File file = getSafePluginFile(path);
             File parentDir = file.getParentFile();
@@ -275,7 +316,11 @@ public class AndroidPluginBridge {
     public void fsExists(String pluginIdFromJs, String path, String callbackId) {
         Log.d(TAG_PREFIX + pluginId, "fsExists called for path: " + path + " cbId: " + callbackId);
         if (!this.pluginId.equals(pluginIdFromJs)) { /* ... ошибка ... */ runJsCallback(callbackId, false, createErrorJson("permission_denied", "Plugin ID mismatch.")); return; }
-        // TODO: Проверка 'read_file' (или специальное разрешение на проверку существования)
+        // Проверка 'read_file' (или специальное разрешение на проверку существования)
+        if (!pluginPermissionManager.hasPermission(pluginId, "read_file")) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Missing read_file permission."));
+            return;
+        }
         try {
             File file = getSafePluginFile(path); // getSafePluginFile может выбросить SecurityException
             boolean exists = file.exists();
@@ -290,6 +335,218 @@ public class AndroidPluginBridge {
         }
     }
 
+    // --- Comic Information API ---
+    @JavascriptInterface
+    public void getCurrentComicInfo(String pluginIdFromJs, String callbackId) {
+        if (!this.pluginId.equals(pluginIdFromJs)) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Plugin ID mismatch."));
+            return;
+        }
+        
+        // Проверка разрешения 'reader_control' для pluginId
+        if (!pluginPermissionManager.hasPermission(pluginId, "reader_control")) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Missing reader_control permission."));
+            return;
+        }
+        
+        try {
+            if (pluginApi != null) {
+                JSONObject comicInfo = pluginApi.getCurrentComicInfo();
+                runJsCallback(callbackId, true, comicInfo.toString());
+            } else {
+                runJsCallback(callbackId, false, createErrorJson("api_unavailable", "Plugin API not available."));
+            }
+        } catch (Exception e) {
+            Log.e(TAG_PREFIX + pluginId, "Error getting comic info", e);
+            runJsCallback(callbackId, false, createErrorJson("native_error", e.getMessage()));
+        }
+    }
+    
+    @JavascriptInterface
+    public void navigateToComic(String pluginIdFromJs, String comicId, String callbackId) {
+        if (!this.pluginId.equals(pluginIdFromJs)) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Plugin ID mismatch."));
+            return;
+        }
+        
+        // Проверка разрешения 'reader_control' для pluginId
+        if (!pluginPermissionManager.hasPermission(pluginId, "reader_control")) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Missing reader_control permission."));
+            return;
+        }
+        
+        try {
+            if (pluginApi != null) {
+                boolean success = pluginApi.navigateToComic(comicId);
+                runJsCallback(callbackId, true, createSuccessJson(success));
+            } else {
+                runJsCallback(callbackId, false, createErrorJson("api_unavailable", "Plugin API not available."));
+            }
+        } catch (Exception e) {
+            Log.e(TAG_PREFIX + pluginId, "Error navigating to comic", e);
+            runJsCallback(callbackId, false, createErrorJson("native_error", e.getMessage()));
+        }
+    }
+    
+    @JavascriptInterface
+    public void getComicMetadata(String pluginIdFromJs, String comicId, String callbackId) {
+        if (!this.pluginId.equals(pluginIdFromJs)) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Plugin ID mismatch."));
+            return;
+        }
+        
+        // Проверка разрешения 'reader_control' для pluginId
+        if (!pluginPermissionManager.hasPermission(pluginId, "reader_control")) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Missing reader_control permission."));
+            return;
+        }
+        
+        try {
+            if (pluginApi != null) {
+                JSONObject metadata = pluginApi.getComicMetadata(comicId);
+                runJsCallback(callbackId, true, metadata != null ? metadata.toString() : "null");
+            } else {
+                runJsCallback(callbackId, false, createErrorJson("api_unavailable", "Plugin API not available."));
+            }
+        } catch (Exception e) {
+            Log.e(TAG_PREFIX + pluginId, "Error getting comic metadata", e);
+            runJsCallback(callbackId, false, createErrorJson("native_error", e.getMessage()));
+        }
+    }
+    
+    // --- Page Navigation API ---
+    @JavascriptInterface
+    public void getCurrentPageInfo(String pluginIdFromJs, String callbackId) {
+        if (!this.pluginId.equals(pluginIdFromJs)) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Plugin ID mismatch."));
+            return;
+        }
+        
+        // Проверка разрешения 'reader_control' для pluginId
+        if (!pluginPermissionManager.hasPermission(pluginId, "reader_control")) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Missing reader_control permission."));
+            return;
+        }
+        
+        try {
+            if (pluginApi != null) {
+                JSONObject pageInfo = pluginApi.getCurrentPageInfo();
+                runJsCallback(callbackId, true, pageInfo.toString());
+            } else {
+                runJsCallback(callbackId, false, createErrorJson("api_unavailable", "Plugin API not available."));
+            }
+        } catch (Exception e) {
+            Log.e(TAG_PREFIX + pluginId, "Error getting page info", e);
+            runJsCallback(callbackId, false, createErrorJson("native_error", e.getMessage()));
+        }
+    }
+    
+    @JavascriptInterface
+    public void navigateToPage(String pluginIdFromJs, int pageNumber, String callbackId) {
+        if (!this.pluginId.equals(pluginIdFromJs)) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Plugin ID mismatch."));
+            return;
+        }
+        
+        // Проверка разрешения 'reader_control' для pluginId
+        if (!pluginPermissionManager.hasPermission(pluginId, "reader_control")) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Missing reader_control permission."));
+            return;
+        }
+        
+        try {
+            if (pluginApi != null) {
+                boolean success = pluginApi.navigateToPage(pageNumber);
+                runJsCallback(callbackId, true, createSuccessJson(success));
+            } else {
+                runJsCallback(callbackId, false, createErrorJson("api_unavailable", "Plugin API not available."));
+            }
+        } catch (Exception e) {
+            Log.e(TAG_PREFIX + pluginId, "Error navigating to page", e);
+            runJsCallback(callbackId, false, createErrorJson("native_error", e.getMessage()));
+        }
+    }
+    
+    @JavascriptInterface
+    public void getPageCount(String pluginIdFromJs, String callbackId) {
+        if (!this.pluginId.equals(pluginIdFromJs)) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Plugin ID mismatch."));
+            return;
+        }
+        
+        // Проверка разрешения 'reader_control' для pluginId
+        if (!pluginPermissionManager.hasPermission(pluginId, "reader_control")) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Missing reader_control permission."));
+            return;
+        }
+        
+        try {
+            if (pluginApi != null) {
+                int pageCount = pluginApi.getPageCount();
+                runJsCallback(callbackId, true, createSuccessJson(pageCount));
+            } else {
+                runJsCallback(callbackId, false, createErrorJson("api_unavailable", "Plugin API not available."));
+            }
+        } catch (Exception e) {
+            Log.e(TAG_PREFIX + pluginId, "Error getting page count", e);
+            runJsCallback(callbackId, false, createErrorJson("native_error", e.getMessage()));
+        }
+    }
+    
+    // --- Reader Settings API ---
+    @JavascriptInterface
+    public void getCurrentReaderSettings(String pluginIdFromJs, String callbackId) {
+        if (!this.pluginId.equals(pluginIdFromJs)) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Plugin ID mismatch."));
+            return;
+        }
+        
+        // Проверка разрешения 'reader_control' для pluginId
+        if (!pluginPermissionManager.hasPermission(pluginId, "reader_control")) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Missing reader_control permission."));
+            return;
+        }
+        
+        try {
+            if (pluginApi != null) {
+                JSONObject settings = pluginApi.getCurrentReaderSettings();
+                runJsCallback(callbackId, true, settings.toString());
+            } else {
+                runJsCallback(callbackId, false, createErrorJson("api_unavailable", "Plugin API not available."));
+            }
+        } catch (Exception e) {
+            Log.e(TAG_PREFIX + pluginId, "Error getting reader settings", e);
+            runJsCallback(callbackId, false, createErrorJson("native_error", e.getMessage()));
+        }
+    }
+    
+    @JavascriptInterface
+    public void updateReaderSettings(String pluginIdFromJs, String settingsJson, String callbackId) {
+        if (!this.pluginId.equals(pluginIdFromJs)) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Plugin ID mismatch."));
+            return;
+        }
+        
+        // Проверка разрешения 'reader_control' для pluginId
+        if (!pluginPermissionManager.hasPermission(pluginId, "reader_control")) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Missing reader_control permission."));
+            return;
+        }
+        
+        try {
+            if (pluginApi != null) {
+                JSONObject settings = new JSONObject(settingsJson);
+                boolean success = pluginApi.updateReaderSettings(settings);
+                runJsCallback(callbackId, true, createSuccessJson(success));
+            } else {
+                runJsCallback(callbackId, false, createErrorJson("api_unavailable", "Plugin API not available."));
+            }
+        } catch (Exception e) {
+            Log.e(TAG_PREFIX + pluginId, "Error updating reader settings", e);
+            runJsCallback(callbackId, false, createErrorJson("native_error", e.getMessage()));
+        }
+    }
+    
     // --- Image API ---
     @JavascriptInterface
     public void imageGetImage(String pluginIdFromJs, String imageId, String callbackId) {
@@ -298,7 +555,11 @@ public class AndroidPluginBridge {
             runJsCallback(callbackId, false, createErrorJson("permission_denied", "Plugin ID mismatch."));
             return;
         }
-        // TODO: Проверка разрешения 'read_image' для pluginId
+        // Проверка разрешения 'read_image' для pluginId
+        if (!pluginPermissionManager.hasPermission(pluginId, "read_image")) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Missing read_image permission."));
+            return;
+        }
         // TODO: Реализовать реальную логику получения данных изображения по imageId (например, из БД или файловой системы)
 
         // Заглушка: возвращаем моковые данные
@@ -338,7 +599,11 @@ public class AndroidPluginBridge {
             runJsCallback(callbackId, false, createErrorJson("permission_denied", "Plugin ID mismatch."));
             return;
         }
-        // TODO: Проверка разрешения 'read_text' для pluginId
+        // Проверка разрешения 'read_text' для pluginId
+        if (!pluginPermissionManager.hasPermission(pluginId, "read_text")) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Missing read_text permission."));
+            return;
+        }
 
         try {
             SharedPreferences prefs = getPluginTextPreferences();
@@ -358,7 +623,11 @@ public class AndroidPluginBridge {
             runJsCallback(callbackId, false, createErrorJson("permission_denied", "Plugin ID mismatch."));
             return;
         }
-        // TODO: Проверка разрешения 'write_text' или 'modify_text' для pluginId
+        // Проверка разрешения 'write_text' или 'modify_text' для pluginId
+        if (!pluginPermissionManager.hasPermission(pluginId, "write_text")) {
+            runJsCallback(callbackId, false, createErrorJson("permission_denied", "Missing write_text permission."));
+            return;
+        }
 
         try {
             SharedPreferences prefs = getPluginTextPreferences();

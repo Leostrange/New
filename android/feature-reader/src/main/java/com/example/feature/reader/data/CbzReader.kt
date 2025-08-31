@@ -5,16 +5,20 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.graphics.BitmapFactory
 import com.example.feature.reader.domain.BookReader
+import com.example.core.reader.ImageOptimizer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.lingala.zip4j.ZipFile
 import java.io.File
+import javax.inject.Inject
 
 /**
  * A [BookReader] implementation for reading CBZ (ZIP archive) files.
+ * Enhanced with memory-efficient loading for large files.
  */
 class CbzReader(
-    private val context: Context
+    private val context: Context,
+    private val imageOptimizer: ImageOptimizer? = null
 ) : BookReader {
 
     private var tempDir: File? = null
@@ -95,12 +99,39 @@ class CbzReader(
         }
         
         val path = pagePaths[pageIndex]
-        return runCatching { 
-            val bitmap = BitmapFactory.decodeFile(path)
-            if (bitmap == null) {
-                android.util.Log.w("CbzReader", "Failed to decode bitmap from: $path")
+        return runCatching {
+            // Use ImageOptimizer if available for better memory management
+            if (imageOptimizer != null) {
+                // Check if this is a large file and use appropriate optimization
+                val isLarge = imageOptimizer.isLargeFile(path)
+                val targetSize = if (isLarge) 1536 else 2048 // Smaller target for large files
+                
+                // Check memory pressure and adjust accordingly
+                val isUnderPressure = imageOptimizer.isUnderMemoryPressure()
+                
+                // Use coroutines in a blocking way for the suspended function
+                kotlinx.coroutines.runBlocking {
+                    // Manage cache based on memory pressure before loading
+                    if (isUnderPressure) {
+                        imageOptimizer.manageCacheBasedOnMemoryPressure()
+                    }
+                    
+                    imageOptimizer.loadOptimizedImageForLargeFiles(
+                        imagePath = path,
+                        targetWidth = if (isUnderPressure) targetSize / 2 else targetSize,
+                        targetHeight = if (isUnderPressure) targetSize / 2 else targetSize,
+                        useCache = !isUnderPressure, // Don't cache under pressure
+                        isLargeFile = isLarge
+                    )
+                }
+            } else {
+                // Fallback to basic BitmapFactory with some optimization
+                val options = BitmapFactory.Options().apply {
+                    inPreferredConfig = Bitmap.Config.RGB_565 // Save memory
+                    inMutable = false
+                }
+                BitmapFactory.decodeFile(path, options)
             }
-            bitmap
         }.getOrElse { e ->
             android.util.Log.e("CbzReader", "Error rendering page $pageIndex: ${e.message}", e)
             null

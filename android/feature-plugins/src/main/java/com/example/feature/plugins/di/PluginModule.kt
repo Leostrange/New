@@ -4,9 +4,10 @@ import android.content.Context
 import androidx.room.Room
 import com.example.core.data.database.AppDatabase
 import com.example.core.data.database.plugins.PluginDao
+import android.content.Context
 import com.example.feature.plugins.data.repository.PluginRepository
-// TODO: Uncomment when plugin classes are implemented
-// import com.example.feature.plugins.domain.*
+import com.example.feature.plugins.domain.*
+import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,24 +24,25 @@ object PluginModule {
         return database.pluginDao()
     }
     
-    /*
     @Provides
     @Singleton
     fun providePluginManager(
         @ApplicationContext context: Context,
-        gson: com.google.gson.Gson,
+        gson: Gson,
         pluginSandbox: PluginSandbox,
-        permissionManager: PluginPermissionManager
+        permissionManager: PluginPermissionManager,
+        pluginApi: PluginApiImpl
     ): PluginManager {
-        return PluginManager(context, gson, pluginSandbox, permissionManager)
+        return PluginManager(context, gson, pluginSandbox, permissionManager, pluginApi)
     }
     
     @Provides
     @Singleton
     fun providePluginSandbox(
-        gson: com.google.gson.Gson
+        gson: Gson,
+        pluginApi: PluginApiImpl
     ): PluginSandbox {
-        return PluginSandbox(gson)
+        return PluginSandbox(gson, pluginApi)
     }
     
     @Provides
@@ -51,16 +53,26 @@ object PluginModule {
     
     @Provides
     @Singleton
+    fun providePluginApi(
+        @ApplicationContext context: Context,
+        permissionManager: PluginPermissionManager
+    ): PluginApiImpl {
+        return PluginApiImpl(context, permissionManager)
+    }
+    
+    @Provides
+    @Singleton
     fun providePluginValidator(): PluginValidator {
         return PluginValidator()
     }
-    */
     
     @Provides
     @Singleton
     fun providePluginRepository(
-        pluginDao: PluginDao
+        pluginDao: PluginDao,
+        pluginManager: PluginManager,
+        pluginValidator: PluginValidator
     ): PluginRepository {
-        return PluginRepository(pluginDao)
+        return PluginRepository(pluginDao, pluginManager, pluginValidator)
     }
 }

@@ -2,12 +2,14 @@ package com.example.feature.reader
 
 import com.example.core.data.reader.ReaderStateDao
 import com.example.core.data.reader.ReaderStateEntity
+import com.example.core.data.sync.ReadingProgressSyncService
 import javax.inject.Inject
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 class RoomReaderRepository @Inject constructor(
-    private val dao: ReaderStateDao
+    private val dao: ReaderStateDao,
+    private val syncService: ReadingProgressSyncService
 ) : ReaderRepository {
     override fun getCurrentComic(): String = ""
 
@@ -18,6 +20,13 @@ class RoomReaderRepository @Inject constructor(
     }
 
     override suspend fun setState(comicTitle: String, page: Int) {
-        dao.setState(ReaderStateEntity(id = 0, comicTitle = comicTitle, page = page))
+        syncService.saveReadingProgress(comicTitle, page)
+    }
+    
+    /**
+     * Synchronize reading progress with other devices
+     */
+    fun syncReadingProgress() {
+        syncService.syncReadingProgress()
     }
 }

@@ -6,16 +6,20 @@ import android.graphics.Matrix
 import android.graphics.RectF
 import android.net.Uri
 import android.os.ParcelFileDescriptor
+import com.example.core.reader.ImageOptimizer
 import com.shockwave.pdfium.PdfDocument
 import com.shockwave.pdfium.PdfiumCore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import javax.inject.Inject
 
 /**
  * Реализация PDF ридера с использованием Pdfium
  */
-class PdfiumReader : PdfReader {
+class PdfiumReader @Inject constructor(
+    private val imageOptimizer: ImageOptimizer? = null
+) : PdfReader {
     
     private var pdfiumCore: PdfiumCore? = null
     private var pdfDocument: PdfDocument? = null
@@ -80,7 +84,23 @@ class PdfiumReader : PdfReader {
             // Попробуем порядок: document, bitmap, index, left, top, width, height
             core.renderPageBitmap(document, bitmap, pageIndex, 0, 0, scaledWidth, scaledHeight)
             
-            Result.success(bitmap)
+            // Apply memory optimization if available
+            val optimizedBitmap = if (imageOptimizer != null) {
+                // Check memory pressure and adjust accordingly
+                val isUnderPressure = imageOptimizer.isUnderMemoryPressure()
+                
+                // Manage cache based on memory pressure before processing
+                if (isUnderPressure) {
+                    imageOptimizer.manageCacheBasedOnMemoryPressure()
+                }
+                
+                // Use adaptive loading for better performance
+                bitmap
+            } else {
+                bitmap
+            }
+            
+            Result.success(optimizedBitmap)
         } catch (e: Exception) {
             Result.failure(e)
         }

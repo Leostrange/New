@@ -8,16 +8,19 @@ import com.example.feature.reader.data.CbrReader
 import com.example.feature.reader.data.CbzReader
 import com.example.feature.reader.data.PdfReader
 import com.example.feature.reader.data.cache.BitmapCache
+import com.example.core.reader.ImageOptimizer
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
 import javax.inject.Inject
 
 /**
  * Factory for creating [BookReader] instances based on file type.
+ * Enhanced with memory-efficient loading for large files.
  */
 class BookReaderFactory @Inject constructor(
     @ApplicationContext private val context: Context,
-    private val bitmapCache: BitmapCache
+    private val bitmapCache: BitmapCache,
+    private val imageOptimizer: ImageOptimizer
 ) {
     
     companion object {
@@ -45,12 +48,12 @@ class BookReaderFactory @Inject constructor(
         
         val delegateReader = when (extension) {
             "cbr" -> {
-                android.util.Log.d(TAG, "Creating CBR reader")
-                CbrReader(context)
+                android.util.Log.d(TAG, "Creating CBR reader with large file optimization")
+                CbrReader(context, imageOptimizer)
             }
             "cbz" -> {
-                android.util.Log.d(TAG, "Creating CBZ reader")
-                CbzReader(context)
+                android.util.Log.d(TAG, "Creating CBZ reader with large file optimization")
+                CbzReader(context, imageOptimizer)
             }
             "pdf" -> {
                 android.util.Log.d(TAG, "Creating PDF reader")

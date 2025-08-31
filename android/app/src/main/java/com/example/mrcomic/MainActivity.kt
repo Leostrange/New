@@ -27,6 +27,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import dagger.hilt.android.AndroidEntryPoint
+import android.util.Log
+import com.example.core.analytics.AnalyticsTracker
+import com.example.core.analytics.AnalyticsEvent
+import com.example.core.analytics.CrashReportingService
+import javax.inject.Inject
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 /**
  * Main activity for Mr.Comic application
@@ -35,11 +42,26 @@ import dagger.hilt.android.AndroidEntryPoint
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     
+    companion object {
+        private const val TAG = "MainActivity"
+    }
+    
+    // Inject analytics tracker
+    @Inject
+    lateinit var analyticsTracker: AnalyticsTracker
+    
+    // Inject crash reporting service
+    @Inject
+    lateinit var crashReportingService: CrashReportingService
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
         // Enable edge-to-edge mode for modern UI
         enableEdgeToEdge()
+        
+        // Initialize crash reporting
+        crashReportingService.initialize(this)
         
         setContent {
             MrComicApp()
@@ -50,19 +72,35 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         
         // Track app activation
-        // TODO: Add app activation analytics
+        Log.d(TAG, "App activated")
+        // Track app launched event
+        trackEvent(AnalyticsEvent.AppLaunched)
     }
     
     override fun onPause() {
         super.onPause()
         
         // Track app background transition
-        // TODO: Add app background transition analytics
+        Log.d(TAG, "App moved to background")
+        // Track app closed event
+        trackEvent(AnalyticsEvent.AppClosed)
+    }
+    
+    private fun trackEvent(event: AnalyticsEvent) {
+        // Launch tracking in a coroutine
+        androidx.lifecycle.lifecycleScope.launch {
+            try {
+                analyticsTracker.trackEvent(event)
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to track event: ${e.message}")
+            }
+        }
     }
 }
 
 /**
- * Main application component with modern video splash screen
+ * Main application component with text-based splash screen
+ * Handles app initialization and navigation setup
  * Manages splash screen state and navigation initialization
  */
 @Composable
@@ -153,7 +191,14 @@ fun MrComicAppPreview() {
             modifier = Modifier.fillMaxSize(),
             color = MaterialTheme.colorScheme.background
         ) {
-            // TODO: Add mock navigation for preview
+            // Add mock navigation for preview
+            val navController = rememberNavController()
+            AppNavHost(
+                navController = navController,
+                onOnboardingComplete = { 
+                    // Mock navigation to library
+                }
+            )
         }
     }
 }

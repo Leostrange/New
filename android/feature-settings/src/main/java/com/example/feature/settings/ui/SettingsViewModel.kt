@@ -1,5 +1,7 @@
 package com.example.feature.settings.ui
 
+import android.content.Context
+import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.core.data.repository.LocalResourcesRepository
@@ -7,7 +9,9 @@ import com.example.core.data.repository.SettingsRepository
 import com.example.core.model.SortOrder
 import com.example.core.model.LocalDictionary
 import com.example.core.model.LocalModel
+import com.example.feature.ocr.data.OfflineTranslationService
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -18,7 +22,9 @@ import javax.inject.Inject
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
-    private val localResourcesRepository: LocalResourcesRepository
+    private val localResourcesRepository: LocalResourcesRepository,
+    private val offlineTranslationService: OfflineTranslationService,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val dictionariesFlow = MutableStateFlow<List<LocalDictionary>>(emptyList())
@@ -139,6 +145,37 @@ class SettingsViewModel @Inject constructor(
     fun clearCache() {
         viewModelScope.launch {
             settingsRepository.clearCache()
+        }
+    }
+    
+    // Dictionary management functions
+    fun importDictionary(sourceUri: Uri) {
+        viewModelScope.launch {
+            val result = localResourcesRepository.importDictionary(sourceUri, context)
+            if (result.isSuccess) {
+                // Refresh the dictionary list
+                refreshLocalResources()
+                // Refresh the offline translation service
+                offlineTranslationService.refreshDictionaries()
+            }
+        }
+    }
+    
+    fun exportDictionary(dictionary: LocalDictionary, destinationUri: Uri) {
+        viewModelScope.launch {
+            localResourcesRepository.exportDictionary(dictionary, destinationUri, context)
+        }
+    }
+    
+    fun deleteDictionary(dictionary: LocalDictionary) {
+        viewModelScope.launch {
+            val result = localResourcesRepository.deleteDictionary(dictionary, context)
+            if (result.isSuccess) {
+                // Refresh the dictionary list
+                refreshLocalResources()
+                // Refresh the offline translation service
+                offlineTranslationService.refreshDictionaries()
+            }
         }
     }
 }

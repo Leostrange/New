@@ -43,7 +43,7 @@ android {
             // Enable additional optimizations
             isDebuggable = false
             isJniDebuggable = false
-            isRenderscriptDebuggable = false
+            // Removed deprecated isRenderscriptDebuggable setting
             
             // Optimize for release
             signingConfig = signingConfigs.getByName("debug") // Use proper signing in production
@@ -119,7 +119,6 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     
     // Android modules with proper paths
-    implementation(project(":android:shared"))
     implementation(project(":android:core-analytics"))
     implementation(project(":android:core-ui"))
     implementation(project(":android:core-data"))
@@ -159,5 +158,3 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
-
-

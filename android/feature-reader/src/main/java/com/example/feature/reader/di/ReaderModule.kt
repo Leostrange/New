@@ -4,6 +4,7 @@ import com.example.feature.reader.RoomReaderRepository
 import com.example.feature.reader.ReaderRepository
 import com.example.core.data.database.AppDatabase
 import com.example.core.data.reader.ReaderStateDao
+import com.example.core.data.sync.ReadingProgressSyncService
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -18,5 +19,6 @@ object ReaderModule {
 
     @Provides
     @Singleton
-    fun provideReaderRepository(dao: ReaderStateDao): ReaderRepository = RoomReaderRepository(dao)
+    fun provideReaderRepository(dao: ReaderStateDao, syncService: ReadingProgressSyncService): ReaderRepository = 
+        RoomReaderRepository(dao, syncService)
 }
