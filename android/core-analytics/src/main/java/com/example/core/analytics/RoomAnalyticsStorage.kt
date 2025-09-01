@@ -19,22 +19,24 @@ class RoomAnalyticsStorage @Inject constructor(
         private const val TAG = "RoomAnalyticsStorage"
     }
     
-    override suspend fun saveEvent(event: AnalyticsEvent) = withContext(Dispatchers.IO) {
-        try {
-            val storedEvent = StoredAnalyticsEvent(
-                id = UUID.randomUUID().toString(),
-                timestamp = System.currentTimeMillis(),
-                eventType = event.javaClass.simpleName,
-                eventName = event.eventName,
-                parameters = event.parameters
-            )
-            
-            val entity = AnalyticsEventEntity.fromStoredEvent(storedEvent)
-            dao.insertEvent(entity)
-            
-            Log.d(TAG, "Saved analytics event: ${event.eventName}")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to save analytics event: ${e.message}", e)
+    override suspend fun saveEvent(event: AnalyticsEvent) {
+        withContext(Dispatchers.IO) {
+            try {
+                val storedEvent = StoredAnalyticsEvent(
+                    id = UUID.randomUUID().toString(),
+                    timestamp = System.currentTimeMillis(),
+                    eventType = event.javaClass.simpleName,
+                    eventName = event.eventName,
+                    parameters = event.parameters
+                )
+                
+                val entity = AnalyticsEventEntity.fromStoredEvent(storedEvent)
+                dao.insertEvent(entity)
+                
+                Log.d(TAG, "Saved analytics event: ${event.eventName}")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to save analytics event: ${e.message}", e)
+            }
         }
     }
     
@@ -68,12 +70,14 @@ class RoomAnalyticsStorage @Inject constructor(
         }
     }
     
-    override suspend fun clearAllEvents() = withContext(Dispatchers.IO) {
-        try {
-            dao.clearAllEvents()
-            Log.d(TAG, "Cleared all analytics events")
-        } catch (e: Exception) {
-            Log.e(TAG, "Failed to clear analytics events: ${e.message}", e)
+    override suspend fun clearAllEvents() {
+        withContext(Dispatchers.IO) {
+            try {
+                dao.clearAllEvents()
+                Log.d(TAG, "Cleared all analytics events")
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to clear analytics events: ${e.message}", e)
+            }
         }
     }
 }

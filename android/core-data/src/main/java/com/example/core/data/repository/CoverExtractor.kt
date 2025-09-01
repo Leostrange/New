@@ -33,11 +33,14 @@ class CoverExtractorImpl @Inject constructor(
             var bitmap: Bitmap? = null
 
             if (extension == "pdf") {
-                val pdfFactory = PdfReaderFactory()
-                val openResult = pdfFactory.openPdfWithFallback(context, uri)
+                val pdfFactory = PdfReaderFactory(
+                    { ctx, optimizer -> com.example.core.reader.pdf.PdfiumReader(ctx, optimizer) },
+                    { com.example.core.reader.pdf.PdfBoxReader() }
+                )
+                val openResult = pdfFactory.openPdfWithFallback(context, null, uri)
                 val pdfReader = openResult.getOrNull()
                 if (pdfReader != null) {
-                    val renderResult = pdfReader.renderPage(0)
+                    val renderResult = pdfReader.renderPage(0, 2048, 2048)
                     bitmap = renderResult.getOrNull()
                     pdfReader.close()
                 }

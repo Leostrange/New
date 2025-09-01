@@ -3,6 +3,7 @@ package com.example.core.reader.pdf
 import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
+import com.example.core.reader.ImageOptimizer
 
 /**
  * Интерфейс для PDF ридера с поддержкой fallback механизмов
@@ -55,51 +56,69 @@ sealed class PdfResult<out T> {
 /**
  * Фабрика для создания PDF ридеров с fallback механизмами
  */
-class PdfReaderFactory {
-    
-    private val readers = mutableListOf<PdfReader>()
-    
-    init {
-        // Добавляем ридеры в порядке приоритета
-        addReader(PdfiumReader())
-        addReader(PdfBoxReader())
-        // Можно добавить другие ридеры в будущем
-    }
-    
-    private fun addReader(reader: PdfReader) {
-        readers.add(reader)
-    }
+class PdfReaderFactory(
+    private val pdfiumReaderFactory: (Context, ImageOptimizer?) -> PdfReader,
+    private val pdfBoxReaderFactory: () -> PdfReader
+) {
     
     /**
      * Создает PDF ридер для указанного URI
+     * @param context Контекст приложения
+     * @param imageOptimizer Оптимизатор изображений
      * @param uri URI PDF файла
      * @return Подходящий ридер или null если ни один не поддерживает
      */
-    fun createReader(uri: Uri): PdfReader? {
-        return readers.firstOrNull { it.supportsUri(uri) }
+    fun createReader(context: Context, imageOptimizer: ImageOptimizer?, uri: Uri): PdfReader? {
+        // Try PdfiumReader first (higher priority)
+        if (PdfiumReader().supportsUri(uri)) {
+            return pdfiumReaderFactory(context, imageOptimizer)
+        }
+        
+        // Fallback to PdfBoxReader
+        if (PdfBoxReader().supportsUri(uri)) {
+            return pdfBoxReaderFactory()
+        }
+        
+        return null
     }
     
     /**
      * Пытается открыть PDF с использованием всех доступных ридеров
      * @param context Контекст приложения
+     * @param imageOptimizer Оптимизатор изображений
      * @param uri URI PDF файла
      * @return Результат операции
      */
-    suspend fun openPdfWithFallback(context: Context, uri: Uri): Result<PdfReader> {
+    suspend fun openPdfWithFallback(context: Context, imageOptimizer: ImageOptimizer?, uri: Uri): Result<PdfReader> {
         val errors = mutableListOf<String>()
         
-        for (reader in readers) {
-            if (!reader.supportsUri(uri)) continue
-            
+        // Try PdfiumReader first
+        if (PdfiumReader().supportsUri(uri)) {
             try {
+                val reader = pdfiumReaderFactory(context, imageOptimizer)
                 val result = reader.openDocument(context, uri)
                 if (result.isSuccess) {
                     return Result.success(reader)
                 } else {
-                    errors.add("${reader.javaClass.simpleName}: ${result.exceptionOrNull()?.message ?: "Unknown error"}")
+                    errors.add("PdfiumReader: ${result.exceptionOrNull()?.message ?: "Unknown error"}")
                 }
             } catch (e: Exception) {
-                errors.add("${reader.javaClass.simpleName}: ${e.message}")
+                errors.add("PdfiumReader: ${e.message}")
+            }
+        }
+        
+        // Fallback to PdfBoxReader
+        if (PdfBoxReader().supportsUri(uri)) {
+            try {
+                val reader = pdfBoxReaderFactory()
+                val result = reader.openDocument(context, uri)
+                if (result.isSuccess) {
+                    return Result.success(reader)
+                } else {
+                    errors.add("PdfBoxReader: ${result.exceptionOrNull()?.message ?: "Unknown error"}")
+                }
+            } catch (e: Exception) {
+                errors.add("PdfBoxReader: ${e.message}")
             }
         }
         

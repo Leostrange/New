@@ -377,7 +377,7 @@ class ImageOptimizer @Inject constructor(
      * Генерирует ключ для кэширования
      */
     private fun generateCacheKey(imagePath: String, width: Int, height: Int): String {
-        return "${imagePath}_$width_$height"
+        return "${imagePath}_${width}_${height}"
     }
     
     /**
@@ -387,6 +387,97 @@ class ImageOptimizer @Inject constructor(
         val maxMemory = Runtime.getRuntime().maxMemory()
         val allocatedMemory = Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()
         return allocatedMemory.toDouble() / maxMemory.toDouble()
+    }
+    
+    /**
+     * Проверяет, находится ли система под давлением памяти
+     */
+    fun isUnderMemoryPressure(): Boolean {
+        return checkMemoryPressure() > CRITICAL_MEMORY_THRESHOLD
+    }
+    
+    /**
+     * Проверяет, является ли файл большим
+     */
+    fun isLargeFile(filePath: String): Boolean {
+        return try {
+            val file = java.io.File(filePath)
+            file.exists() && file.length() > LARGE_FILE_THRESHOLD
+        } catch (e: Exception) {
+            false
+        }
+    }
+    
+    /**
+     * Управляет кэшем в зависимости от давления на память
+     */
+    fun manageCacheBasedOnMemoryPressure() {
+        val memoryPressure = checkMemoryPressure()
+        
+        when {
+            memoryPressure > CRITICAL_MEMORY_THRESHOLD -> {
+                // Критическое давление - очищаем все кэши
+                clearCaches()
+            }
+            memoryPressure > AGGRESSIVE_COMPRESSION_THRESHOLD -> {
+                // Высокое давление - уменьшаем размер кэшей
+                // Note: LruCache doesn't have a direct way to reduce size, so we'll just evict some entries
+                // This is a simplified approach - in a real implementation you might want more sophisticated cache management
+                val evictionCount = bitmapCache.snapshot().size / 2
+                repeat(evictionCount) {
+                    bitmapCache.evictAll() // Simplified - in reality you'd want to evict selectively
+                }
+            }
+        }
+    }
+    
+    /**
+     * Адаптивная загрузка изображений в зависимости от характеристик устройства
+     */
+    suspend fun loadAdaptiveImage(
+        imagePath: String,
+        targetWidth: Int,
+        targetHeight: Int
+    ): Bitmap? = withContext(Dispatchers.IO) {
+        val strategy = getAdaptiveLoadingStrategy()
+        
+        val adjustedWidth = when (strategy) {
+            LoadingStrategy.LOW_MEMORY -> targetWidth / 2
+            LoadingStrategy.MEDIUM_MEMORY -> (targetWidth * 0.75).toInt()
+            LoadingStrategy.HIGH_MEMORY -> targetWidth
+            LoadingStrategy.VERY_HIGH_MEMORY -> targetWidth
+        }
+        
+        val adjustedHeight = when (strategy) {
+            LoadingStrategy.LOW_MEMORY -> targetHeight / 2
+            LoadingStrategy.MEDIUM_MEMORY -> (targetHeight * 0.75).toInt()
+            LoadingStrategy.HIGH_MEMORY -> targetHeight
+            LoadingStrategy.VERY_HIGH_MEMORY -> targetHeight
+        }
+        
+        val config = when (strategy) {
+            LoadingStrategy.LOW_MEMORY -> Bitmap.Config.RGB_565
+            LoadingStrategy.MEDIUM_MEMORY -> Bitmap.Config.RGB_565
+            else -> Bitmap.Config.ARGB_8888
+        }
+        
+        try {
+            val options = BitmapFactory.Options().apply {
+                inJustDecodeBounds = true
+            }
+            BitmapFactory.decodeFile(imagePath, options)
+            
+            val inSampleSize = calculateInSampleSize(options, adjustedWidth, adjustedHeight)
+            
+            val decodeOptions = BitmapFactory.Options().apply {
+                this.inSampleSize = inSampleSize
+                this.inPreferredConfig = config
+            }
+            
+            BitmapFactory.decodeFile(imagePath, decodeOptions)
+        } catch (e: Exception) {
+            null
+        }
     }
     
     /**

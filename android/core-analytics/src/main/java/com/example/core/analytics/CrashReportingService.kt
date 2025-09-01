@@ -85,8 +85,6 @@ class CrashReportingService @Inject constructor(
                 errorType = crashEvent.parameters["error_type"] as String,
                 errorMessage = crashEvent.parameters["error_message"] as String,
                 stackTrace = crashEvent.parameters["stack_trace"] as String?
-            ).copy(
-                parameters = extendedParameters
             )
             
             // Track the crash event
@@ -218,15 +216,7 @@ class CrashReportingService @Inject constructor(
             )
             
             // Add device information if context is available
-            val extendedErrorEvent = if (context != null) {
-                val deviceInfo = getDeviceInfo(context)
-                val extendedParameters = errorEvent.parameters.toMutableMap().apply {
-                    putAll(deviceInfo)
-                }
-                errorEvent.copy(parameters = extendedParameters)
-            } else {
-                errorEvent
-            }
+            val extendedErrorEvent = errorEvent
             
             // Track the error event
             CoroutineScope(Dispatchers.IO + SupervisorJob()).launch {

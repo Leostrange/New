@@ -10,7 +10,10 @@ import java.io.File
  */
 class PdfReaderTest(private val context: Context) {
     
-    private val pdfReaderFactory = PdfReaderFactory()
+    private val pdfReaderFactory = PdfReaderFactory(
+        { ctx, optimizer -> com.example.core.reader.pdf.PdfiumReader(ctx, optimizer) },
+        { com.example.core.reader.pdf.PdfBoxReader() }
+    )
     
     /**
      * Тестирует все доступные PDF ридеры
@@ -19,7 +22,9 @@ class PdfReaderTest(private val context: Context) {
         val results = mutableListOf<ReaderTestResult>()
         
         // Тестируем каждый ридер
-        for (reader in listOf(PdfiumReader(), PdfBoxReader())) {
+        val pdfiumReader = com.example.core.reader.pdf.PdfiumReader(context, null)
+        val pdfBoxReader = com.example.core.reader.pdf.PdfBoxReader()
+        for (reader in listOf(pdfiumReader, pdfBoxReader)) {
             val result = testReader(reader, uri)
             results.add(result)
         }

@@ -2,13 +2,13 @@ package com.example.core.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.Button
@@ -50,9 +50,10 @@ fun MrComicCard(
         elevation = CardDefaults.cardElevation(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
-        ),
-        content = content
-    )
+        )
+    ) {
+        content()
+    }
 }
 
 /**
@@ -78,22 +79,16 @@ fun MrComicPrimaryButton(
  *
  * @param title The title to be displayed in the center of the app bar.
  * @param modifier The modifier to be applied to the app bar.
- * @param navigationIcon The composable to be displayed at the start of the app bar, typically an icon button.
- * @param actions The composable to be displayed at the end of the app bar, typically a row of icon buttons.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MrComicTopAppBar(
     title: String,
-    modifier: Modifier = Modifier,
-    navigationIcon: @Composable () -> Unit = {},
-    actions: @Composable RowScope.() -> Unit = {}
+    modifier: Modifier = Modifier
 ) {
     CenterAlignedTopAppBar(
         title = { Text(text = title) },
         modifier = modifier,
-        navigationIcon = navigationIcon,
-        actions = actions,
         colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
             containerColor = MaterialTheme.colorScheme.primaryContainer
         )

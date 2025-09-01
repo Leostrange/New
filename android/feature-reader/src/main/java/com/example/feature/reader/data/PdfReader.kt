@@ -17,7 +17,10 @@ class PdfReader(
     private val context: Context
 ) : BookReader {
 
-    private val pdfReaderFactory = PdfReaderFactory()
+    private val pdfReaderFactory = PdfReaderFactory(
+        { ctx, optimizer -> com.example.core.reader.pdf.PdfiumReader(ctx, optimizer) },
+        { com.example.core.reader.pdf.PdfBoxReader() }
+    )
     private var currentReader: com.example.core.reader.pdf.PdfReader? = null
     private var pageCount: Int = 0
 
@@ -28,7 +31,7 @@ class PdfReader(
                 close()
                 
                 // Пытаемся открыть PDF с использованием всех доступных ридеров
-                val result = pdfReaderFactory.openPdfWithFallback(context, uri)
+                val result = pdfReaderFactory.openPdfWithFallback(context, null, uri)
                 if (result.isFailure) {
                     throw IllegalStateException("Failed to open PDF: ${result.exceptionOrNull()?.message}")
                 }
@@ -66,7 +69,7 @@ class PdfReader(
         return runCatching {
             // Используем suspend функцию в runBlocking для совместимости с существующим API
             kotlinx.coroutines.runBlocking {
-                val result = reader.renderPage(pageIndex)
+                val result = reader.renderPage(pageIndex, 2048, 2048)
                 if (result.isSuccess) {
                     result.getOrThrow()
                 } else {

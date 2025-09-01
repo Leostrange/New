@@ -6,3 +6,63 @@ node_modules/
 test_cache/
 results/
 __pycache__/
+
+# Логи и временные файлы
+*.log
+error_log.txt
+
+# Файлы ОС
+.DS_Store
+Thumbs.db
+
+# IntelliJ IDEA
+*.iml
+*.iws
+out/
+
+# VS Code
+.vscode/
+
+# Резервные копии
+*~
+.bak
+
+# Media файлы (они большие и могут быть загружены отдельно)
+media/video.gif
+media/video_2025-06-29_00-49-05.mp4
+media/video_optimized.gif
+
+# Дублирующие отчеты
+*TASK*.md
+*SUMMARY*.md
+*REPORT*.md
+*COMPLETION*.md
+*IMPLEMENTATION*.md
+*VERIFICATION*.md
+*STATUS*.md
+*PROJECT*.md
+*FINAL*.md
+*INTEGRATION*.md
+*ENHANCEMENT*.md
+*IMPROVEMENT*.md
+*SYSTEM*.md
+*CLEANUP*.md
+*EXECUTION*.md
+*REMAINING*.md
+*SPLASH*.md
+*ADDITIONAL*.md
+*OFFLINE*.md
+*PERFORMANCE*.md
+*PLUGIN*.md
+*LIBRARY*.md
+*CRASH*.md
+*ANALYTICS*.md
+*USER*.md
+*DEVELOPER*.md
+*DASHBOARD*.md
+*OCR*.md
+*TRANSLATION*.md
+*COMPREHENSIVE*.md
+*TODOLIST*.md
+*ROADMAP*.md
+*TODO*.md
