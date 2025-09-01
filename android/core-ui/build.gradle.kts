@@ -1,7 +1,7 @@
 plugins {
-    id("com.android.library")
-    id("org.jetbrains.kotlin.android")
-    id("org.jetbrains.kotlin.plugin.compose")
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
 }
 
 android {
@@ -51,6 +51,10 @@ dependencies {
     implementation(libs.accompanist.systemuicontroller)
     implementation(libs.accompanist.permissions)
     implementation(libs.constraintlayout.compose)
+    
+    // Media3 for video splash
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.ui)
     
     // Testing
     testImplementation(libs.test.junit)

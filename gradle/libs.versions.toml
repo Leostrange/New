@@ -245,6 +245,7 @@ translation = ["opusmt-android", "huggingface-transformers", "m2m100-android", "
 android-application = { id = "com.android.application", version.ref = "androidApplication" }
 android-library = { id = "com.android.library", version.ref = "androidLibrary" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlinAndroid" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlinAndroid" }
 hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlinAndroid" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
