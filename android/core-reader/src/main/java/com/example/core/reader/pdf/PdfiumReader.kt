@@ -8,7 +8,6 @@ import com.example.core.reader.ImageOptimizer
 import com.github.barteksc.pdfiumandroid.PdfiumCore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.runBlocking
-
 import javax.inject.Inject
 
 /**

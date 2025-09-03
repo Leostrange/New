@@ -24,9 +24,18 @@ class PdfBoxReader : PdfReader {
     
     override suspend fun openDocument(context: Context, uri: Uri): Result<Unit> {
         return try {
-            // Open PDF document using context and uri
-            // This is a simplified implementation
-            Result.success(Unit)
+            withContext(Dispatchers.IO) {
+                val inputStream: InputStream = context.contentResolver.openInputStream(uri)
+                    ?: return@withContext Result.failure<Unit>(Exception("Cannot open input stream for URI: $uri"))
+                
+                pdfDocument = PDDocument.load(inputStream)
+                pdfRenderer = PDFRenderer(pdfDocument)
+                pageCount = pdfDocument?.numberOfPages ?: 0
+                
+                Result.success(Unit)
+            }
+        } catch (e: IOException) {
+            Result.failure(Exception("Failed to open PDF document: ${e.message}", e))
         } catch (e: Exception) {
             Result.failure(e)
         }
