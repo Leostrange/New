@@ -65,13 +65,12 @@ pdfium_android = "1.9.0"
 telephoto = "0.11.0"
 commons_compress = "1.26.0"
 
-# Custom (working versions - FIXED)
+# PDF Libraries (working versions - FIXED)
 pdfboxAndroid = "2.0.27.0"
 slf4jAndroid = "1.7.36"
 mlkitTextRecognition = "16.0.0"
 materialIconsExtended = "1.6.8"
 androidPdfViewer = "2.8.2"
-
 androidPdfViewerFallback = "2.7.0-beta.3"
 
 # UI Components for modern design
