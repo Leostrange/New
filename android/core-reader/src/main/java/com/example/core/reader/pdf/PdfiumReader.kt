@@ -5,7 +5,8 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import com.example.core.reader.ImageOptimizer
-import com.github.barteksc.pdfiumandroid.PdfiumCore
+import com.shockwave.pdfium.PdfDocument
+import com.shockwave.pdfium.PdfiumCore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
@@ -19,7 +20,7 @@ class PdfiumReader @Inject constructor(
 ) : PdfReader {
     
     private var pdfiumCore: PdfiumCore? = null
-    private var pdfDocument: Long = 0
+    private var pdfDocument: PdfDocument? = null
     private var parcelFileDescriptor: ParcelFileDescriptor? = null
     private var pageCount: Int = 0
     
@@ -31,8 +32,10 @@ class PdfiumReader @Inject constructor(
             // Открываем файл
             parcelFileDescriptor = context.contentResolver.openFileDescriptor(uri, "r")
             parcelFileDescriptor?.let { pfd ->
-                pdfDocument = pdfiumCore?.newDocument(pfd, null) ?: 0
-                pageCount = pdfiumCore?.getPageCount(pdfDocument) ?: 0
+                pdfDocument = pdfiumCore?.newDocument(pfd)
+                pageCount = pdfDocument?.let { doc ->
+                    pdfiumCore?.getPageCount(doc)
+                } ?: 0
                 Result.success(Unit)
             } ?: Result.failure(Exception("Failed to open PDF document"))
         } catch (e: Exception) {
@@ -43,13 +46,13 @@ class PdfiumReader @Inject constructor(
     override suspend fun renderPage(pageIndex: Int, maxWidth: Int, maxHeight: Int): Result<Bitmap> {
         return try {
             val core = pdfiumCore ?: return Result.failure(Exception("PdfiumCore not initialized"))
-            if (pdfDocument == 0L) return Result.failure(Exception("PDF document not opened"))
+            val doc = pdfDocument ?: return Result.failure(Exception("PDF document not opened"))
             if (pageIndex < 0 || pageIndex >= pageCount) return Result.failure(Exception("Invalid page index"))
             
-            // Получаем размеры страницы
-            val pageSize = core.getPageSize(pdfDocument, pageIndex)
-            val pageWidth = pageSize.width
-            val pageHeight = pageSize.height
+            // Открываем страницу и получаем размеры
+            core.openPage(doc, pageIndex)
+            val pageWidth = core.getPageWidthPoint(doc, pageIndex)
+            val pageHeight = core.getPageHeightPoint(doc, pageIndex)
             
             // Рассчитываем масштаб (используем фиксированный масштаб для совместимости)
             val scale = calculateScale(pageWidth, pageHeight, maxWidth, maxHeight)
@@ -60,7 +63,7 @@ class PdfiumReader @Inject constructor(
             
             // Рендерим страницу (сигнатуры библиотек различаются порядком аргументов)
             // Попробуем порядок: document, bitmap, index, left, top, width, height
-            core.renderPageBitmap(pdfDocument, bitmap, pageIndex, 0, 0, scaledWidth, scaledHeight)
+            core.renderPageBitmap(doc, bitmap, pageIndex, 0, 0, scaledWidth, scaledHeight)
             
             // Apply memory optimization if available
             val optimizedBitmap = if (imageOptimizer != null) {
@@ -85,18 +88,20 @@ class PdfiumReader @Inject constructor(
     }
     
     override fun getPageCount(): Int? {
-        return if (pdfDocument != 0L) pageCount else null
+        return if (pdfDocument != null) pageCount else null
     }
     
     override fun close() {
         try {
-            pdfiumCore?.closeDocument(pdfDocument)
+            pdfDocument?.let { doc ->
+                pdfiumCore?.closeDocument(doc)
+            }
             parcelFileDescriptor?.close()
         } catch (e: Exception) {
             // Игнорируем ошибки при закрытии
         } finally {
             pdfiumCore = null
-            pdfDocument = 0L
+            pdfDocument = null
             parcelFileDescriptor = null
             pageCount = 0
         }

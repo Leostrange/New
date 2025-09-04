@@ -69,17 +69,10 @@ class PdfReaderFactory(
      * @return Подходящий ридер или null если ни один не поддерживает
      */
     fun createReader(context: Context, imageOptimizer: ImageOptimizer?, uri: Uri): PdfReader? {
-        // Try PdfiumReader first (higher priority)
-        if (PdfiumReader().supportsUri(uri)) {
-            return pdfiumReaderFactory(context, imageOptimizer)
-        }
-        
-        // Fallback to PdfBoxReader
-        if (PdfBoxReader().supportsUri(uri)) {
-            return pdfBoxReaderFactory()
-        }
-        
-        return null
+        val isPdf = uri.toString().lowercase().endsWith(".pdf")
+        if (!isPdf) return null
+        // Prefer PdfiumReader
+        return pdfiumReaderFactory(context, imageOptimizer)
     }
     
     /**
@@ -93,7 +86,7 @@ class PdfReaderFactory(
         val errors = mutableListOf<String>()
         
         // Try PdfiumReader first
-        if (PdfiumReader().supportsUri(uri)) {
+        if (uri.toString().lowercase().endsWith(".pdf")) {
             try {
                 val reader = pdfiumReaderFactory(context, imageOptimizer)
                 val result = reader.openDocument(context, uri)
@@ -108,7 +101,7 @@ class PdfReaderFactory(
         }
         
         // Fallback to PdfBoxReader
-        if (PdfBoxReader().supportsUri(uri)) {
+        if (uri.toString().lowercase().endsWith(".pdf")) {
             try {
                 val reader = pdfBoxReaderFactory()
                 val result = reader.openDocument(context, uri)

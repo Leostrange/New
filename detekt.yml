@@ -10,17 +10,8 @@ config:
   warningsAsErrors: false
   checkExhaustiveness: false
 
-processors:
+reports:
   active: true
-  exclude: []
-
-console-reports:
-  active: true
-  exclude: []
-
-output-reports:
-  active: true
-  exclude: []
 
 comments:
   active: true
