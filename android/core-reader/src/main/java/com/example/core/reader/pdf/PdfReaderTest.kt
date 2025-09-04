@@ -97,7 +97,7 @@ class PdfReaderTest(private val context: Context) {
     fun testFactoryWithFallback(uri: Uri): FactoryTestResult {
         return try {
             runBlocking {
-                val result = pdfReaderFactory.openPdfWithFallback(context, uri)
+                val result = pdfReaderFactory.openPdfWithFallback(context, null, uri)
                 if (result.isSuccess) {
                     val reader = result.getOrThrow()
                     val pageCount = reader.getPageCount()
