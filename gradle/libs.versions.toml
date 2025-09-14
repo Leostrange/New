@@ -91,21 +91,18 @@ glide = "4.15.1"
 # Chart & Data visualization  
 charts = "1.0.1"
 
-# OCR and AI (according to roadmap)
-tesseract = "5.3.3"
-paddleocr = "2.7.0"
-easyocr = "1.7.0"
-trocr = "0.1.0"
+# OCR and AI (working versions only)
+tesseract = "9.1.0"
 
-# Translation engines (according to roadmap)
-opusmt = "1.2.1"
-huggingface = "4.40.0"
-m2m100 = "1.1.0"
-nllb = "1.0.0"
+# Translation engines (commented out until implementation)
+# opusmt = "1.2.1"
+# huggingface = "4.40.0"
+# m2m100 = "1.1.0"
+# nllb = "1.0.0"
 
-# Whisper speech recognition
-whisper = "1.0.0"
-whisperTflite = "1.0.0"
+# Whisper speech recognition (commented out until implementation)
+# whisper = "1.0.0"
+# whisperTflite = "1.0.0"
 
 [libraries]
 # Networking
@@ -123,7 +120,7 @@ androidx-compose-material-icons-extended = { group = "androidx.compose.material"
 androidx-compose-window-size = { group = "androidx.compose.material3", name = "material3-window-size-class" }
 
 # AndroidX Core
-androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.9.0" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.12.0" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
 androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "lifecycle" }
 androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
@@ -219,26 +216,26 @@ detekt-formatting = { group = "io.gitlab.arturbosch.detekt", name = "detekt-form
 
 # OCR and AI Libraries (according to roadmap)
 tesseract-android = { group = "com.rmtheis", name = "tess-two", version = "9.1.0" }
-paddleocr-android = { group = "com.github.PaddlePaddle", name = "PaddleOCR", version.ref = "paddleocr" }
-easyocr-android = { group = "com.github.JaidedAI", name = "EasyOCR", version.ref = "easyocr" }
-trocr-android = { group = "com.microsoft", name = "TrOCR", version.ref = "trocr" }
+# paddleocr-android = { group = "com.github.PaddlePaddle", name = "PaddleOCR", version.ref = "paddleocr" }
+# easyocr-android = { group = "com.github.JaidedAI", name = "EasyOCR", version.ref = "easyocr" }
+# trocr-android = { group = "com.microsoft", name = "TrOCR", version.ref = "trocr" }
 
-# Translation Libraries (according to roadmap)
-opusmt-android = { group = "com.github.Helsinki-NLP", name = "OPUS-MT", version.ref = "opusmt" }
-huggingface-transformers = { group = "com.huggingface", name = "transformers", version.ref = "huggingface" }
-m2m100-android = { group = "com.facebook", name = "M2M100", version.ref = "m2m100" }
-nllb-android = { group = "com.facebook", name = "NLLB", version.ref = "nllb" }
+# Translation Libraries (according to roadmap) - commented out until implementation
+# opusmt-android = { group = "com.github.Helsinki-NLP", name = "OPUS-MT", version.ref = "opusmt" }
+# huggingface-transformers = { group = "com.huggingface", name = "transformers", version.ref = "huggingface" }
+# m2m100-android = { group = "com.facebook", name = "M2M100", version.ref = "m2m100" }
+# nllb-android = { group = "com.facebook", name = "NLLB", version.ref = "nllb" }
 
-# Whisper speech recognition libraries
-whisper-android = { group = "com.github.gerddie", name = "whisper-android", version.ref = "whisper" }
-whisper-tflite = { group = "org.tensorflow", name = "tensorflow-lite", version.ref = "whisperTflite" }
+# Whisper speech recognition libraries - commented out until implementation
+# whisper-android = { group = "com.github.gerddie", name = "whisper-android", version.ref = "whisper" }
+# whisper-tflite = { group = "org.tensorflow", name = "tensorflow-lite", version.ref = "whisperTflite" }
 
 [bundles]
 compose = ["androidx-compose-ui", "androidx-compose-material3", "androidx-compose-ui-tooling-preview"]
 room = ["androidx-room-runtime", "androidx-room-ktx"]
 test-unit = ["test-junit", "test-kotlinx-coroutines", "test-mockito-core", "test-mockito-kotlin", "test-truth", "test-mockk", "test-arch-core"]
-ocr = ["tesseract-android", "paddleocr-android", "easyocr-android", "trocr-android"]
-translation = ["opusmt-android", "huggingface-transformers", "m2m100-android", "nllb-android"]
+ocr = ["tesseract-android"]
+# translation = ["opusmt-android", "huggingface-transformers", "m2m100-android", "nllb-android"]
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "androidApplication" }
