@@ -5,7 +5,9 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import com.example.core.model.SortOrder
+import com.example.core.ui.theme.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -45,6 +47,13 @@ interface SettingsRepository {
     val readerBackground: Flow<Long>
     suspend fun setReaderBackground(color: Long)
 
+    // Theme settings
+    val themeMode: Flow<ThemeMode>
+    suspend fun setThemeMode(themeMode: ThemeMode)
+
+    val isDynamicColorEnabled: Flow<Boolean>
+    suspend fun setDynamicColorEnabled(enabled: Boolean)
+
     suspend fun clearCache()
 }
 
@@ -64,6 +73,8 @@ class SettingsRepositoryImpl @Inject constructor(
         val READER_LINE_SPACING = stringPreferencesKey("reader_line_spacing")
         val READER_FONT = stringPreferencesKey("reader_font")
         val READER_BACKGROUND = stringPreferencesKey("reader_background")
+        val THEME_MODE = stringPreferencesKey("theme_mode")
+        val DYNAMIC_COLOR_ENABLED = booleanPreferencesKey("dynamic_color_enabled")
     }
 
     override val sortOrder: Flow<SortOrder> = dataStore.data.map {
@@ -163,6 +174,23 @@ class SettingsRepositoryImpl @Inject constructor(
 
     override suspend fun setReaderBackground(color: Long) {
         dataStore.edit { it[PreferencesKeys.READER_BACKGROUND] = color.toString() }
+    }
+
+    override val themeMode: Flow<ThemeMode> = dataStore.data.map {
+        val name = it[PreferencesKeys.THEME_MODE] ?: ThemeMode.SYSTEM.name
+        ThemeMode.valueOf(name)
+    }
+
+    override suspend fun setThemeMode(themeMode: ThemeMode) {
+        dataStore.edit { it[PreferencesKeys.THEME_MODE] = themeMode.name }
+    }
+
+    override val isDynamicColorEnabled: Flow<Boolean> = dataStore.data.map {
+        it[PreferencesKeys.DYNAMIC_COLOR_ENABLED] ?: true
+    }
+
+    override suspend fun setDynamicColorEnabled(enabled: Boolean) {
+        dataStore.edit { it[PreferencesKeys.DYNAMIC_COLOR_ENABLED] = enabled }
     }
 
     override suspend fun clearCache() {

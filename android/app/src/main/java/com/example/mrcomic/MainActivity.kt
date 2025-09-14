@@ -13,10 +13,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
+import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.navigation.compose.rememberNavController
 import com.example.core.ui.splash.VideoSplash
 import com.example.core.ui.theme.MrComicTheme
-import com.example.mrcomic.navigation.AppNavHost
+import com.example.mrcomic.navigation.MrComicNavigation
 import com.example.mrcomic.navigation.Screen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -103,6 +105,7 @@ class MainActivity : ComponentActivity() {
  * Handles app initialization and navigation setup
  * Manages splash screen state and navigation initialization
  */
+@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
 @Composable
 fun MrComicApp() {
     var showVideoSplash by remember { mutableStateOf(true) }
@@ -132,8 +135,11 @@ fun MrComicApp() {
                 }
             } else {
                 val navController = rememberNavController()
-                AppNavHost(
+                val windowSizeClass = calculateWindowSizeClass(activity = this@MainActivity)
+                
+                MrComicNavigation(
                     navController = navController,
+                    windowSizeClass = windowSizeClass,
                     onOnboardingComplete = { 
                         // Navigate to library after onboarding completion
                         navController.navigate(Screen.Library.route) {
@@ -186,20 +192,8 @@ private fun SimpleTextSplash(onFinished: () -> Unit) {
 @Composable
 fun MrComicAppPreview() {
     MrComicTheme {
-        // For preview, show a simplified version
-        Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = MaterialTheme.colorScheme.background
-        ) {
-            // Add mock navigation for preview
-            val navController = rememberNavController()
-            AppNavHost(
-                navController = navController,
-                onOnboardingComplete = { 
-                    // Mock navigation to library
-                }
-            )
-        }
+        // For preview, show a simplified text splash
+        SimpleTextSplash(onFinished = {})
     }
 }
 
