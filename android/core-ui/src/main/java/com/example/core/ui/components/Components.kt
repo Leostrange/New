@@ -35,6 +35,8 @@ import com.example.core.model.BottomNavItem
 import com.example.core.model.ComicBook
 import com.example.core.ui.theme.PaddingLarge
 import com.example.core.ui.theme.PaddingMedium
+import com.example.core.ui.theme.ComicCoverAspectRatio
+import com.example.core.ui.theme.CornerRadiusMedium
 
 /**
  * A standardized Card component for the application.
@@ -153,7 +155,7 @@ fun ComicCoverCard(
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .aspectRatio(2f / 3f) // Typical comic book aspect ratio
+                        .aspectRatio(ComicCoverAspectRatio) // Standard comic book aspect ratio
                 )
                 Text(
                     text = comicBook.title,

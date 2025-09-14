@@ -1,12 +1,16 @@
 package com.example.core.ui.theme
 
+import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 
 /**
  * Dark theme colors based on UI mockups analysis
@@ -178,46 +182,90 @@ private val LightColorScheme = lightColorScheme(
 )
 
 /**
- * Mr.Comic theme with automatic dark/light switching
+ * Mr.Comic theme with automatic dark/light switching and Dynamic Color support
+ * 
+ * @param darkTheme Whether to use dark theme (defaults to system setting)
+ * @param dynamicColor Whether to use Material You dynamic colors (Android 12+)
+ * @param content The composable content
  */
 @Composable
 fun MrComicTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
+    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val context = LocalContext.current
+    
+    val colorScheme = when {
+        // Dynamic Color is available (Android 12+) and enabled
+        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        }
+        // Use custom color schemes
+        darkTheme -> DarkColorScheme
+        else -> LightColorScheme
+    }
 
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        shapes = MrComicShapes,
         content = content
     )
 }
 
 /**
  * Force dark theme regardless of system setting
+ * 
+ * @param dynamicColor Whether to use Material You dynamic colors (Android 12+)
+ * @param content The composable content
  */
 @Composable
 fun MrComicDarkTheme(
+    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    val context = LocalContext.current
+    
+    val colorScheme = when {
+        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+            dynamicDarkColorScheme(context)
+        }
+        else -> DarkColorScheme
+    }
+
     MaterialTheme(
-        colorScheme = DarkColorScheme,
+        colorScheme = colorScheme,
         typography = Typography,
+        shapes = MrComicShapes,
         content = content
     )
 }
 
 /**
  * Force light theme regardless of system setting
+ * 
+ * @param dynamicColor Whether to use Material You dynamic colors (Android 12+)
+ * @param content The composable content
  */
 @Composable
 fun MrComicLightTheme(
+    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
+    val context = LocalContext.current
+    
+    val colorScheme = when {
+        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+            dynamicLightColorScheme(context)
+        }
+        else -> LightColorScheme
+    }
+
     MaterialTheme(
-        colorScheme = LightColorScheme,
+        colorScheme = colorScheme,
         typography = Typography,
+        shapes = MrComicShapes,
         content = content
     )
 }
