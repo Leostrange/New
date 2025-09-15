@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MrComic</string>
+    
+    <!-- Navigation -->
+    <string name="library">Библиотека</string>
+    <string name="library_content_description">Библиотека комиксов</string>
+    <string name="reader">Читалка</string>
+    <string name="reader_content_description">Читалка комиксов</string>
+    <string name="ocr">OCR</string>
+    <string name="ocr_content_description">Распознавание и перевод текста</string>
+    <string name="settings">Настройки</string>
+    <string name="settings_content_description">Настройки приложения</string>
+    
+    <!-- Common -->
+    <string name="search">Поиск</string>
+    <string name="favorite">Избранное</string>
+    <string name="add_to_favorites">Добавить в избранное</string>
+    <string name="remove_from_favorites">Убрать из избранного</string>
+    <string name="reading_progress">Прогресс чтения</string>
+    <string name="completed">Прочитано</string>
+    <string name="in_progress">В процессе</string>
+    <string name="not_started">Не начато</string>
+    
+    <!-- Library -->
+    <string name="library_empty">Библиотека пуста</string>
+    <string name="library_empty_description">Добавьте комиксы для начала чтения</string>
+    <string name="add_comics">Добавить комиксы</string>
+    <string name="sort_by">Сортировать по</string>
+    <string name="filter">Фильтр</string>
+    <string name="grid_view">Сетка</string>
+    <string name="list_view">Список</string>
+    
+    <!-- Reader -->
+    <string name="page_indicator">Страница %1$d из %2$d</string>
+    <string name="reading_mode">Режим чтения</string>
+    <string name="zoom_level">Масштаб</string>
+    <string name="fullscreen_mode">Полноэкранный режим</string>
+    <string name="brightness">Яркость</string>
+    
+    <!-- OCR -->
+    <string name="text_recognition">Распознавание текста</string>
+    <string name="translation">Перевод</string>
+    <string name="select_text_area">Выберите область с текстом</string>
+    <string name="processing_ocr">Обработка текста...</string>
+    <string name="translating">Перевод...</string>
+    
+    <!-- Settings -->
+    <string name="reading_settings">Настройки чтения</string>
+    <string name="customization">Кастомизация</string>
+    <string name="ocr_translation_settings">OCR и переводы</string>
+    <string name="backup_sync">Резервное копирование</string>
+    <string name="about">О приложении</string>
+    
+    <!-- Error messages -->
+    <string name="error_loading_comic">Ошибка загрузки комикса</string>
+    <string name="error_ocr_failed">Не удалось распознать текст</string>
+    <string name="error_translation_failed">Ошибка перевода</string>
+    <string name="error_network">Ошибка сети</string>
+    
+    <!-- Success messages -->
+    <string name="comic_added">Комикс добавлен</string>
+    <string name="settings_saved">Настройки сохранены</string>
+    <string name="backup_completed">Резервное копирование завершено</string>
+</resources>
