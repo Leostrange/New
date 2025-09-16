@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Mr.Comic</string>
+    <string name="app_description">Современное приложение для чтения комиксов с переводом</string>
+    
+    <!-- Navigation -->
+    <string name="nav_library">Библиотека</string>
+    <string name="nav_reader">Читалка</string>
+    <string name="nav_translations">Переводы</string>
+    <string name="nav_settings">Настройки</string>
+    
+    <!-- Library -->
+    <string name="library_title">Моя библиотека</string>
+    <string name="library_empty">Библиотека пуста</string>
+    <string name="library_add_comic">Добавить комикс</string>
+    <string name="library_search">Поиск комиксов</string>
+    
+    <!-- Reader -->
+    <string name="reader_page_info">Страница %1$d из %2$d</string>
+    <string name="reader_loading">Загрузка страницы...</string>
+    <string name="reader_error">Ошибка загрузки страницы</string>
+    <string name="reader_zoom_fit">По размеру</string>
+    <string name="reader_zoom_width">По ширине</string>
+    <string name="reader_zoom_height">По высоте</string>
+    
+    <!-- Translation -->
+    <string name="translation_processing">Обработка перевода...</string>
+    <string name="translation_complete">Перевод завершен</string>
+    <string name="translation_error">Ошибка перевода</string>
+    <string name="translation_select_language">Выберите язык</string>
+    
+    <!-- Settings -->
+    <string name="settings_reading">Настройки чтения</string>
+    <string name="settings_translation">Настройки перевода</string>
+    <string name="settings_sync">Синхронизация</string>
+    <string name="settings_backup">Резервное копирование</string>
+    <string name="settings_theme">Тема оформления</string>
+    
+    <!-- Permissions -->
+    <string name="permission_storage_title">Доступ к файлам</string>
+    <string name="permission_storage_message">Приложению нужен доступ к файлам для открытия комиксов</string>
+    <string name="permission_camera_title">Доступ к камере</string>
+    <string name="permission_camera_message">Камера нужна для сканирования QR-кодов и OCR</string>
+    
+    <!-- Errors -->
+    <string name="error_file_not_found">Файл не найден</string>
+    <string name="error_unsupported_format">Неподдерживаемый формат файла</string>
+    <string name="error_network">Ошибка сети</string>
+    <string name="error_sync_failed">Ошибка синхронизации</string>
+</resources>
