@@ -1,68 +1,27 @@
-# Временные и служебные папки
-.gradle/
-.idea/
-build/
-node_modules/
-test_cache/
-results/
-__pycache__/
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# Логи и временные файлы
-*.log
-error_log.txt
+# dependencies
+/node_modules
 
-# Файлы ОС
-.DS_Store
-Thumbs.db
+# next.js
+/.next/
+/out/
 
-# IntelliJ IDEA
-*.iml
-*.iws
-out/
+# production
+/build
 
-# VS Code
-.vscode/
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
 
-# Резервные копии
-*~
-.bak
+# env files
+.env*
 
-# Media файлы (они большие и могут быть загружены отдельно)
-media/video.gif
-media/video_2025-06-29_00-49-05.mp4
-media/video_optimized.gif
+# vercel
+.vercel
 
-# Дублирующие отчеты
-*TASK*.md
-*SUMMARY*.md
-*REPORT*.md
-*COMPLETION*.md
-*IMPLEMENTATION*.md
-*VERIFICATION*.md
-*STATUS*.md
-*PROJECT*.md
-*FINAL*.md
-*INTEGRATION*.md
-*ENHANCEMENT*.md
-*IMPROVEMENT*.md
-*SYSTEM*.md
-*CLEANUP*.md
-*EXECUTION*.md
-*REMAINING*.md
-*SPLASH*.md
-*ADDITIONAL*.md
-*OFFLINE*.md
-*PERFORMANCE*.md
-*PLUGIN*.md
-*LIBRARY*.md
-*CRASH*.md
-*ANALYTICS*.md
-*USER*.md
-*DEVELOPER*.md
-*DASHBOARD*.md
-*OCR*.md
-*TRANSLATION*.md
-*COMPREHENSIVE*.md
-*TODOLIST*.md
-*ROADMAP*.md
-*TODO*.md
+# typescript
+*.tsbuildinfo
+next-env.d.ts
