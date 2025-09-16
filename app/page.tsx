@@ -6,11 +6,26 @@ import { RegisterForm } from "@/components/auth/register-form"
 import { MainApp } from "@/components/main-app"
 import { AndroidLibraryDemo } from "@/components/android-demo/android-library"
 import { Button } from "@/components/ui/button"
+import { MrComicShowcase } from "@/components/project-demo/mr-comic-showcase"
 
 export default function HomePage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [showRegister, setShowRegister] = useState(false)
   const [showAndroidDemo, setShowAndroidDemo] = useState(false)
+  const [showProjectResult, setShowProjectResult] = useState(true)
+
+  if (showProjectResult) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="p-4 text-center border-b">
+          <Button onClick={() => setShowProjectResult(false)} variant="outline">
+            Перейти к приложению
+          </Button>
+        </div>
+        <MrComicShowcase />
+      </div>
+    )
+  }
 
   if (showAndroidDemo) {
     return (
