@@ -60,7 +60,7 @@
 - Compose BOM 2024.02.00+
 \`\`\`
 
-```kotlin file="android/core-database/src/main/java/com/mrcomic/core/database/entity/ComicEntity.kt"
+\`\`\`kotlin file="android/core-database/src/main/java/com/mrcomic/core/database/entity/ComicEntity.kt"
 package com.mrcomic.core.database.entity
 
 import androidx.room.Entity

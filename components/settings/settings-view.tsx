@@ -5,15 +5,13 @@ import type React from "react"
 import { useState } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { ChevronRight, Globe, Palette, Zap, Bell, Volume2, Languages, BookOpen } from "lucide-react"
+import { ChevronRight, Globe, Palette, Zap, Bell, Volume2 } from "lucide-react"
 import { AccountSettings } from "./account-settings"
 import { LanguageSettings } from "./language-settings"
 import { ThemeSettings } from "./theme-settings"
 import { OptimizationSettings } from "./optimization-settings"
-import { TranslatorSettings } from "./translator-settings"
-import { ReadingSettings } from "./reading-settings"
 
-type SettingsSection = "main" | "account" | "language" | "themes" | "optimization" | "translators" | "reading"
+type SettingsSection = "main" | "account" | "language" | "themes" | "optimization"
 
 export function SettingsView() {
   const [currentSection, setCurrentSection] = useState<SettingsSection>("main")
@@ -32,14 +30,6 @@ export function SettingsView() {
 
   if (currentSection === "optimization") {
     return <OptimizationSettings onBack={() => setCurrentSection("main")} />
-  }
-
-  if (currentSection === "translators") {
-    return <TranslatorSettings onBack={() => setCurrentSection("main")} />
-  }
-
-  if (currentSection === "reading") {
-    return <ReadingSettings onBack={() => setCurrentSection("main")} />
   }
 
   return (
@@ -69,13 +59,6 @@ export function SettingsView() {
       {/* Settings Options */}
       <div className="space-y-2">
         <SettingsItem
-          icon={BookOpen}
-          title="Чтение"
-          description="Навигация, звуки, комфорт чтения"
-          onClick={() => setCurrentSection("reading")}
-        />
-
-        <SettingsItem
           icon={Globe}
           title="Общие настройки"
           description="Язык, клавиатура"
@@ -83,16 +66,9 @@ export function SettingsView() {
         />
 
         <SettingsItem
-          icon={Languages}
-          title="Переводчики"
-          description="API ключи, облачные переводчики"
-          onClick={() => setCurrentSection("translators")}
-        />
-
-        <SettingsItem
           icon={Palette}
           title="Дисплей"
-          description="Темы, яркость, тайм-аут экрана"
+          description="Яркость, тайм-аут экрана"
           onClick={() => setCurrentSection("themes")}
         />
 

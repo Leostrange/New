@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft, ArrowRight, X, Menu } from "lucide-react"
 import { ReaderMenu } from "./reader-menu"
 import { ReaderSettings } from "./reader-settings"
-import { ExitConfirmDialog } from "./exit-confirm-dialog"
 
 interface ReaderViewProps {
   onClose: () => void
@@ -58,7 +57,6 @@ export function ReaderView({ onClose }: ReaderViewProps) {
   const [showMenu, setShowMenu] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
   const [readingProgress, setReadingProgress] = useState(0)
-  const [showExitDialog, setShowExitDialog] = useState(false)
 
   const [fontSize, setFontSize] = useState(16)
   const [fontFamily, setFontFamily] = useState("serif")
@@ -106,19 +104,6 @@ export function ReaderView({ onClose }: ReaderViewProps) {
     }
   }
 
-  const handleExit = () => {
-    if (readingProgress > 10 && readingProgress < 100) {
-      setShowExitDialog(true)
-    } else {
-      onClose()
-    }
-  }
-
-  const confirmExit = () => {
-    setShowExitDialog(false)
-    onClose()
-  }
-
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft" || e.key === "a") {
@@ -126,7 +111,7 @@ export function ReaderView({ onClose }: ReaderViewProps) {
       } else if (e.key === "ArrowRight" || e.key === "d") {
         nextPage()
       } else if (e.key === "Escape") {
-        handleExit()
+        onClose()
       } else if (e.key === " ") {
         e.preventDefault()
         setShowControls(!showControls)
@@ -135,7 +120,7 @@ export function ReaderView({ onClose }: ReaderViewProps) {
 
     window.addEventListener("keydown", handleKeyPress)
     return () => window.removeEventListener("keydown", handleKeyPress)
-  }, [currentPage, pages.length, showControls, readingProgress])
+  }, [currentPage, pages.length, showControls, onClose])
 
   const getBackgroundClass = () => {
     switch (backgroundColor) {
@@ -150,43 +135,19 @@ export function ReaderView({ onClose }: ReaderViewProps) {
 
   const currentPageData = pages[currentPage]
 
-  if (!currentPageData) {
-    return (
-      <div className="h-full flex items-center justify-center bg-background">
-        <div className="text-center">
-          <p className="text-lg text-muted-foreground">Страница не найдена</p>
-          <Button onClick={onClose} className="mt-4">
-            Вернуться в библиотеку
-          </Button>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className={`relative h-full ${getBackgroundClass()}`}>
       {/* Header */}
       {showControls && (
         <div className="absolute top-0 left-0 right-0 z-20 bg-background/95 backdrop-blur-sm border-b p-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Button variant="outline" size="sm" onClick={handleExit} className="bg-background/80">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Назад
-              </Button>
-              <h1 className="text-lg font-semibold">Глава 3 - Страница {currentPage + 1}</h1>
-            </div>
+            <h1 className="text-lg font-semibold">Глава 3 - Страница {currentPage + 1}</h1>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">{Math.round(readingProgress)}% прочитано</span>
               <Button variant="ghost" size="sm" onClick={() => setShowMenu(true)}>
                 <Menu className="h-5 w-5" />
               </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleExit}
-                className="bg-red-500 hover:bg-red-600 text-white"
-              >
+              <Button variant="ghost" size="sm" onClick={onClose}>
                 <X className="h-5 w-5" />
                 <span className="ml-2">Выйти</span>
               </Button>
@@ -202,7 +163,7 @@ export function ReaderView({ onClose }: ReaderViewProps) {
       >
         <div className={`max-w-4xl w-full h-full rounded-lg shadow-lg overflow-hidden ${getBackgroundClass()}`}>
           <img
-            src={currentPageData.imageUrl || "/placeholder.svg?height=800&width=600&query=comic book page"}
+            src={currentPageData.imageUrl || "/placeholder.svg"}
             alt={`Page ${currentPage + 1}`}
             className="w-full h-full object-contain"
           />
@@ -261,15 +222,6 @@ export function ReaderView({ onClose }: ReaderViewProps) {
         onLineSpacingChange={setLineSpacing}
         backgroundColor={backgroundColor}
         onBackgroundColorChange={setBackgroundColor}
-      />
-
-      <ExitConfirmDialog
-        isOpen={showExitDialog}
-        onClose={() => setShowExitDialog(false)}
-        onConfirm={confirmExit}
-        progress={readingProgress}
-        currentPage={currentPage + 1}
-        totalPages={pages.length}
       />
     </div>
   )
