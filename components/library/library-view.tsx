@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Search, Grid, List, Filter, SortAsc } from "lucide-react"
+import { PluginsTab } from "./plugins-tab"
 
 interface LibraryViewProps {
   onOpenReader: () => void
@@ -94,6 +95,9 @@ const cloudComics = [
     cover: "/cloud-comic-1.png",
     pages: 25,
     progress: 0,
+    cloudStatus: "synced" as "synced" | "syncing" | "error",
+    lastSynced: new Date().toISOString(),
+    cloudProvider: "Google Drive" as "Google Drive" | "OneDrive" | "Yandex Disk",
   },
   {
     id: 11,
@@ -102,6 +106,9 @@ const cloudComics = [
     cover: "/cloud-comic-2.png",
     pages: 18,
     progress: 0,
+    cloudStatus: "syncing" as "synced" | "syncing" | "error",
+    lastSynced: new Date().toISOString(),
+    cloudProvider: "OneDrive" as "Google Drive" | "OneDrive" | "Yandex Disk",
   },
 ]
 
@@ -109,6 +116,8 @@ export function LibraryView({ onOpenReader }: LibraryViewProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [activeTab, setActiveTab] = useState("library")
+  const [isCloudConnected, setIsCloudConnected] = useState(false)
+  const [cloudProvider, setCloudProvider] = useState<string | null>(null)
 
   const getCurrentComics = () => {
     switch (activeTab) {
@@ -182,7 +191,62 @@ export function LibraryView({ onOpenReader }: LibraryViewProps) {
           </TabsContent>
 
           <TabsContent value="cloud" className="mt-0">
-            <ComicsGrid comics={filteredComics} viewMode={viewMode} onOpenReader={onOpenReader} />
+            {!isCloudConnected ? (
+              <div className="p-8 text-center space-y-4">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold">Подключите облачное хранилище</h3>
+                  <p className="text-muted-foreground">
+                    Синхронизируйте свои комиксы и прогресс чтения между устройствами
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2 max-w-sm mx-auto">
+                  <Button
+                    onClick={() => {
+                      setIsCloudConnected(true)
+                      setCloudProvider("Google Drive")
+                    }}
+                    className="w-full"
+                  >
+                    Подключить Google Drive
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsCloudConnected(true)
+                      setCloudProvider("OneDrive")
+                    }}
+                    className="w-full"
+                  >
+                    Подключить OneDrive
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setIsCloudConnected(true)
+                      setCloudProvider("Yandex Disk")
+                    }}
+                    className="w-full"
+                  >
+                    Подключить Яндекс.Диск
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="px-4 py-2 bg-muted/50 border-b">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <span className="text-sm">Подключено к {cloudProvider}</span>
+                    </div>
+                    <Button variant="outline" size="sm">
+                      Синхронизировать
+                    </Button>
+                  </div>
+                </div>
+                <ComicsGrid comics={filteredComics} viewMode={viewMode} onOpenReader={onOpenReader} />
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="annotations" className="mt-0">
@@ -190,9 +254,7 @@ export function LibraryView({ onOpenReader }: LibraryViewProps) {
           </TabsContent>
 
           <TabsContent value="plugins" className="mt-0">
-            <div className="p-8 text-center">
-              <p className="text-muted-foreground">Плагины будут доступны в следующих версиях</p>
-            </div>
+            <PluginsTab />
           </TabsContent>
         </Tabs>
       </div>
@@ -208,6 +270,9 @@ interface ComicsGridProps {
     cover: string
     pages: number
     progress: number
+    cloudStatus?: "synced" | "syncing" | "error"
+    lastSynced?: string
+    cloudProvider?: string
   }>
   viewMode: "grid" | "list"
   onOpenReader: () => void
@@ -259,6 +324,22 @@ function ComicsGrid({ comics, viewMode, onOpenReader }: ComicsGridProps) {
                         </p>
                       </div>
                     )}
+                    {comic.cloudStatus && (
+                      <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/60 to-transparent p-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-white">
+                            {comic.cloudStatus === "synced"
+                              ? "Синхронизировано"
+                              : comic.cloudStatus === "syncing"
+                                ? "Синхронизация..."
+                                : "Ошибка синхронизации"}
+                          </span>
+                          <span className="text-sm text-white">
+                            {comic.lastSynced ? new Date(comic.lastSynced).toLocaleString() : ""}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="text-center space-y-1">
                     <h3 className="font-medium text-sm leading-tight line-clamp-2">{comic.title}</h3>
@@ -273,6 +354,22 @@ function ComicsGrid({ comics, viewMode, onOpenReader }: ComicsGridProps) {
                       alt={comic.title}
                       className="w-full h-full object-cover"
                     />
+                    {comic.cloudStatus && (
+                      <div className="absolute top-0 left-0 right-0 bg-gradient-to-b from-black/60 to-transparent p-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-white">
+                            {comic.cloudStatus === "synced"
+                              ? "Синхронизировано"
+                              : comic.cloudStatus === "syncing"
+                                ? "Синхронизация..."
+                                : "Ошибка синхронизации"}
+                          </span>
+                          <span className="text-sm text-white">
+                            {comic.lastSynced ? new Date(comic.lastSynced).toLocaleString() : ""}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="flex-1 min-w-0 space-y-1">
                     <h3 className="font-medium truncate">{comic.title}</h3>
