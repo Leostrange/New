@@ -1,76 +1,52 @@
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("com.google.dagger.hilt.android")
-    id("com.google.devtools.ksp")
-    id("org.jetbrains.kotlin.plugin.compose") version libs.versions.kotlinAndroid.get()
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)
 }
 
 android {
-    lint {
-        disable += "NullSafeMutableLiveData"
-    }
-    namespace = "com.example.mrcomic"
-    compileSdk = libs.versions.compileSdk.get().toInt()
+    namespace = "com.mrcomic"
+    compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.mrcomic"
-        minSdk = libs.versions.minSdk.get().toInt()
-        targetSdk = libs.versions.targetSdk.get().toInt()
-
+        applicationId = "com.mrcomic"
+        minSdk = 24
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables {
-            useSupportLibrary = true
-        }
-        
-        // BuildConfig поля для конфигурации
-        buildConfigField("String", "BASE_API_URL", "\"http://10.0.2.2:3000/api/\"")
-        buildConfigField("boolean", "ENABLE_LOGGING", "true")
-        buildConfigField("String", "PLUGIN_STORE_URL", "\"https://plugins.mrcomic.app/\"")
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            
-            // Enable additional optimizations
-            isDebuggable = false
-            isJniDebuggable = false
-            // Removed deprecated isRenderscriptDebuggable setting
-            
-            // Optimize for release
-            signingConfig = signingConfigs.getByName("debug") // Use proper signing in production
-        }
-        
-        debug {
-            isDebuggable = true
-            applicationIdSuffix = ".debug"
-            versionNameSuffix = "-debug"
         }
     }
-    
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_11
+        targetCompatibility = JavaVersion.VERSION_11
     }
-    
+
     kotlinOptions {
-        jvmTarget = libs.versions.jvmTarget.get()
+        jvmTarget = "11"
     }
-    
+
     buildFeatures {
         compose = true
-        buildConfig = true
     }
-    
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.8"
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -78,81 +54,25 @@ android {
     }
 }
 
-// KSP does not need kapt options
-
 dependencies {
-    // AndroidX Core
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
-    implementation(libs.androidx.splashscreen)
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.lifecycle.runtime.compose)
-    
-    // Compose BOM
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.material.icons.extended)
-    implementation(libs.androidx.compose.window.size)
-    
-    // Navigation
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.hilt.android)
     implementation(libs.androidx.hilt.navigation.compose)
-
-    // Networking
-    implementation(libs.retrofit.core)
-    implementation(libs.retrofit.converter.gson)
-    implementation(libs.okhttp.logging.interceptor)
-    implementation(libs.google.gson)
-
-    // Hilt DI
-    implementation(libs.google.hilt.android)
-    ksp(libs.google.hilt.compiler)
+    ksp(libs.hilt.compiler)
     
-    // Room Database
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    ksp(libs.androidx.room.compiler)
-    
-    // Android modules with proper paths
-    implementation(project(":android:core-analytics"))
-    implementation(project(":android:core-ui"))
-    implementation(project(":android:core-data"))
-    implementation(project(":android:core-model"))
-    implementation(project(":android:core-reader"))
-    implementation(project(":android:feature-library"))
-    implementation(project(":android:feature-settings"))
-    implementation(project(":android:feature-reader"))
-    implementation(project(":android:feature-themes"))
-    implementation(project(":android:feature-onboarding"))
-    implementation(project(":android:feature-plugins"))
-    
-    // Third-party libraries
-    implementation(libs.coil.compose)
-    implementation(libs.material)
-    
-    // Archive support for comic files
-    implementation(libs.zip4j)
-    implementation(libs.junrar)
-    implementation(libs.commons.compress)
-    
-    // PDF support - using stable alternatives
-    implementation(libs.pdfium.android)
-    // implementation(libs.android.pdf.viewer.fallback)
-    
-    // Video splash screen (Media3)
-    implementation(libs.media3.exoplayer)
-    implementation(libs.media3.ui)
-    implementation(libs.media3.session)
-    
-    // Testing
-    testImplementation(libs.test.junit)
+    testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-    debugImplementation("androidx.compose.ui:ui-tooling")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.tooling)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }
