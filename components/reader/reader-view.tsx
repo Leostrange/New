@@ -150,6 +150,19 @@ export function ReaderView({ onClose }: ReaderViewProps) {
 
   const currentPageData = pages[currentPage]
 
+  if (!currentPageData) {
+    return (
+      <div className="h-full flex items-center justify-center bg-background">
+        <div className="text-center">
+          <p className="text-lg text-muted-foreground">Страница не найдена</p>
+          <Button onClick={onClose} className="mt-4">
+            Вернуться в библиотеку
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className={`relative h-full ${getBackgroundClass()}`}>
       {/* Header */}
@@ -189,7 +202,7 @@ export function ReaderView({ onClose }: ReaderViewProps) {
       >
         <div className={`max-w-4xl w-full h-full rounded-lg shadow-lg overflow-hidden ${getBackgroundClass()}`}>
           <img
-            src={currentPageData.imageUrl || "/placeholder.svg"}
+            src={currentPageData?.imageUrl || "/placeholder.svg?height=800&width=600&query=comic book page"}
             alt={`Page ${currentPage + 1}`}
             className="w-full h-full object-contain"
           />
