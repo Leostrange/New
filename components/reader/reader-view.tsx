@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, ArrowRight, X, Menu } from "lucide-react"
 import { ReaderMenu } from "./reader-menu"
@@ -10,45 +10,117 @@ interface ReaderViewProps {
   onClose: () => void
 }
 
-const mockContent = `The following morning I was awoken early by the sonorous pealing of the village church bell.
+interface ComicPage {
+  id: string
+  pageNumber: number
+  imageUrl: string
+  text?: string
+}
 
-I raised the blinds, seeing golden sunlight break through the mist, casting its glow over the surrounding hedgerows and fields, and beyond, cresting the hill as a towering silhouette of chalk cliffs against the morning sky.
-
-I strolled along a gravel path leading to a small countryside inn. The crunch of gravel beneath my boots, the fresh morning air carried the scent of grass and the soft breeze on my face, savored in the scene.
-
-A few early risers were scattered across the green lawn, some reading newspapers while sipping their morning tea, others engaged in quiet conversation about the day ahead.
-
-The inn itself was a charming stone building, its walls covered in ivy that had turned brilliant shades of red and gold with the autumn season. Smoke curled lazily from the chimney, promising warmth and comfort within.
-
-As I approached the entrance, the heavy wooden door creaked open, revealing a cozy interior filled with the aroma of freshly baked bread and brewing coffee. The innkeeper, a kindly woman with silver hair, greeted me with a warm smile.
-
-"Good morning, traveler," she said, her voice carrying the gentle accent of the countryside. "You're up early today. Would you care for some breakfast?"
-
-I nodded gratefully, taking a seat by the window where I could continue to admire the peaceful morning landscape while enjoying a hearty meal.`
+const sampleComicPages: ComicPage[] = [
+  {
+    id: "page_1",
+    pageNumber: 1,
+    imageUrl: "/comic-book-page-1-superhero-action.jpg",
+    text: "In the bustling city of New York, our hero begins their journey...",
+  },
+  {
+    id: "page_2",
+    pageNumber: 2,
+    imageUrl: "/comic-book-page-2-city-skyline-night.jpg",
+    text: "The night sky illuminated the towering skyscrapers as danger lurked in the shadows...",
+  },
+  {
+    id: "page_3",
+    pageNumber: 3,
+    imageUrl: "/comic-book-page-3-villain-confrontation.jpg",
+    text: "Face to face with their greatest enemy, our hero must make a choice...",
+  },
+  {
+    id: "page_4",
+    pageNumber: 4,
+    imageUrl: "/comic-book-page-4-epic-battle-scene.jpg",
+    text: "The battle rages on as powers clash in an epic confrontation...",
+  },
+  {
+    id: "page_5",
+    pageNumber: 5,
+    imageUrl: "/comic-book-page-5-victory-celebration.jpg",
+    text: "Victory is achieved, but at what cost? The story continues...",
+  },
+]
 
 export function ReaderView({ onClose }: ReaderViewProps) {
-  const [currentPage, setCurrentPage] = useState(4)
-  const [totalPages] = useState(15)
+  const [currentPage, setCurrentPage] = useState(0)
+  const [pages] = useState(sampleComicPages)
   const [showControls, setShowControls] = useState(true)
   const [showMenu, setShowMenu] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
+  const [readingProgress, setReadingProgress] = useState(0)
 
   const [fontSize, setFontSize] = useState(16)
   const [fontFamily, setFontFamily] = useState("serif")
   const [lineSpacing, setLineSpacing] = useState(1.6)
   const [backgroundColor, setBackgroundColor] = useState("white")
 
+  useEffect(() => {
+    const progress = ((currentPage + 1) / pages.length) * 100
+    setReadingProgress(progress)
+
+    // Save progress to localStorage
+    localStorage.setItem(
+      "comic_progress",
+      JSON.stringify({
+        currentPage,
+        progress,
+        timestamp: Date.now(),
+      }),
+    )
+  }, [currentPage, pages.length])
+
+  useEffect(() => {
+    const savedProgress = localStorage.getItem("comic_progress")
+    if (savedProgress) {
+      try {
+        const { currentPage: savedPage } = JSON.parse(savedProgress)
+        if (savedPage >= 0 && savedPage < pages.length) {
+          setCurrentPage(savedPage)
+        }
+      } catch (e) {
+        console.error("Failed to load saved progress:", e)
+      }
+    }
+  }, [pages.length])
+
   const nextPage = () => {
-    if (currentPage < totalPages) {
+    if (currentPage < pages.length - 1) {
       setCurrentPage(currentPage + 1)
     }
   }
 
   const prevPage = () => {
-    if (currentPage > 1) {
+    if (currentPage > 0) {
       setCurrentPage(currentPage - 1)
     }
   }
+
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === "ArrowLeft" || e.key === "a") {
+        prevPage()
+      } else if (e.key === "ArrowRight" || e.key === "d") {
+        nextPage()
+      } else if (e.key === "Escape") {
+        onClose()
+      } else if (e.key === " ") {
+        e.preventDefault()
+        setShowControls(!showControls)
+      }
+    }
+
+    window.addEventListener("keydown", handleKeyPress)
+    return () => window.removeEventListener("keydown", handleKeyPress)
+  }, [currentPage, pages.length, showControls, onClose])
 
   const getBackgroundClass = () => {
     switch (backgroundColor) {
@@ -61,16 +133,7 @@ export function ReaderView({ onClose }: ReaderViewProps) {
     }
   }
 
-  const getFontFamilyClass = () => {
-    switch (fontFamily) {
-      case "sans":
-        return "font-sans"
-      case "mono":
-        return "font-mono"
-      default:
-        return "font-serif"
-    }
-  }
+  const currentPageData = pages[currentPage]
 
   return (
     <div className={`relative h-full ${getBackgroundClass()}`}>
@@ -78,8 +141,9 @@ export function ReaderView({ onClose }: ReaderViewProps) {
       {showControls && (
         <div className="absolute top-0 left-0 right-0 z-20 bg-background/95 backdrop-blur-sm border-b p-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-lg font-semibold">Глава 3</h1>
+            <h1 className="text-lg font-semibold">Глава 3 - Страница {currentPage + 1}</h1>
             <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">{Math.round(readingProgress)}% прочитано</span>
               <Button variant="ghost" size="sm" onClick={() => setShowMenu(true)}>
                 <Menu className="h-5 w-5" />
               </Button>
@@ -97,20 +161,12 @@ export function ReaderView({ onClose }: ReaderViewProps) {
         className="h-full flex items-center justify-center p-4 cursor-pointer"
         onClick={() => setShowControls(!showControls)}
       >
-        <div className={`max-w-4xl w-full h-full rounded-lg shadow-lg p-8 overflow-auto ${getBackgroundClass()}`}>
-          <div
-            className={`${getFontFamilyClass()} leading-relaxed`}
-            style={{
-              fontSize: `${fontSize}px`,
-              lineHeight: lineSpacing,
-            }}
-          >
-            {mockContent.split("\n\n").map((paragraph, index) => (
-              <p key={index} className="mb-6">
-                {paragraph}
-              </p>
-            ))}
-          </div>
+        <div className={`max-w-4xl w-full h-full rounded-lg shadow-lg overflow-hidden ${getBackgroundClass()}`}>
+          <img
+            src={currentPageData.imageUrl || "/placeholder.svg"}
+            alt={`Page ${currentPage + 1}`}
+            className="w-full h-full object-contain"
+          />
         </div>
       </div>
 
@@ -118,23 +174,23 @@ export function ReaderView({ onClose }: ReaderViewProps) {
       {showControls && (
         <div className="absolute bottom-0 left-0 right-0 z-20 bg-background/95 backdrop-blur-sm border-t p-4">
           <div className="flex items-center justify-between">
-            <Button variant="outline" size="sm" onClick={prevPage} disabled={currentPage === 1}>
+            <Button variant="outline" size="sm" onClick={prevPage} disabled={currentPage === 0}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
 
             <div className="flex items-center gap-4">
               <span className="text-sm font-medium">
-                {currentPage} / {totalPages}
+                {currentPage + 1} / {pages.length}
               </span>
               <div className="w-32 h-2 bg-muted rounded-full overflow-hidden">
                 <div
                   className="h-full bg-primary transition-all duration-300"
-                  style={{ width: `${(currentPage / totalPages) * 100}%` }}
+                  style={{ width: `${readingProgress}%` }}
                 />
               </div>
             </div>
 
-            <Button variant="outline" size="sm" onClick={nextPage} disabled={currentPage === totalPages}>
+            <Button variant="outline" size="sm" onClick={nextPage} disabled={currentPage === pages.length - 1}>
               <ArrowRight className="h-4 w-4" />
             </Button>
           </div>
@@ -149,6 +205,9 @@ export function ReaderView({ onClose }: ReaderViewProps) {
           setShowMenu(false)
           setShowSettings(true)
         }}
+        currentPage={currentPage}
+        totalPages={pages.length}
+        onGoToPage={setCurrentPage}
       />
 
       {/* Reader Settings */}

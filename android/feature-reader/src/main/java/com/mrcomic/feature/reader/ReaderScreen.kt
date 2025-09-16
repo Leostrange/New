@@ -14,38 +14,78 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReaderScreen(
     comicId: String,
     onBackClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: ReaderViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var isControlsVisible by remember { mutableStateOf(true) }
     var showReaderMenu by remember { mutableStateOf(false) }
-    val pages = remember { generateSamplePages() }
-    val pagerState = rememberPagerState(pageCount = { pages.size })
+    val pagerState = rememberPagerState(
+        initialPage = uiState.currentPage,
+        pageCount = { uiState.totalPages }
+    )
+    val coroutineScope = rememberCoroutineScope()
+
+    LaunchedEffect(comicId) {
+        viewModel.loadComic(comicId)
+    }
+
+    LaunchedEffect(pagerState.currentPage) {
+        if (pagerState.currentPage != uiState.currentPage) {
+            viewModel.updateReadingProgress(pagerState.currentPage)
+        }
+    }
 
     Box(modifier = modifier.fillMaxSize()) {
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable { isControlsVisible = !isControlsVisible }
-        ) { page ->
-            AsyncImage(
-                model = pages[page],
-                contentDescription = "Page ${page + 1}",
-                contentScale = ContentScale.Fit,
-                modifier = Modifier.fillMaxSize()
+        if (uiState.isLoading) {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center)
             )
+        } else if (uiState.error != null) {
+            Column(
+                modifier = Modifier.align(Alignment.Center),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Ошибка загрузки: ${uiState.error}",
+                    color = MaterialTheme.colorScheme.error
+                )
+                Button(
+                    onClick = { viewModel.loadComic(comicId) },
+                    modifier = Modifier.padding(top = 16.dp)
+                ) {
+                    Text("Повторить")
+                }
+            }
+        } else {
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable { isControlsVisible = !isControlsVisible }
+            ) { page ->
+                AsyncImage(
+                    model = uiState.pages.getOrNull(page)?.imageUrl,
+                    contentDescription = "Страница ${page + 1}",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize()
+                )
+            }
         }
 
-        if (isControlsVisible) {
+        if (isControlsVisible && !uiState.isLoading) {
             TopAppBar(
-                title = { Text("Глава 3") },
+                title = { Text(uiState.comic?.title ?: "Читалка") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Назад")
@@ -66,7 +106,7 @@ fun ReaderScreen(
             )
         }
 
-        if (isControlsVisible) {
+        if (isControlsVisible && !uiState.isLoading) {
             Row(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -78,8 +118,10 @@ fun ReaderScreen(
             ) {
                 IconButton(
                     onClick = { 
-                        if (pagerState.currentPage > 0) {
-                            // Navigate to previous page
+                        coroutineScope.launch {
+                            if (pagerState.currentPage > 0) {
+                                pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                            }
                         }
                     },
                     enabled = pagerState.currentPage > 0
@@ -88,7 +130,7 @@ fun ReaderScreen(
                 }
 
                 Text(
-                    text = "${pagerState.currentPage + 1} / ${pages.size}",
+                    text = "${pagerState.currentPage + 1} / ${uiState.totalPages}",
                     color = Color.White,
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -99,11 +141,13 @@ fun ReaderScreen(
 
                 IconButton(
                     onClick = { 
-                        if (pagerState.currentPage < pages.size - 1) {
-                            // Navigate to next page
+                        coroutineScope.launch {
+                            if (pagerState.currentPage < uiState.totalPages - 1) {
+                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                            }
                         }
                     },
-                    enabled = pagerState.currentPage < pages.size - 1
+                    enabled = pagerState.currentPage < uiState.totalPages - 1
                 ) {
                     Icon(Icons.Default.ArrowForward, contentDescription = "Следующая", tint = Color.White)
                 }
@@ -113,10 +157,10 @@ fun ReaderScreen(
         if (showReaderMenu) {
             ReaderMenuDialog(
                 onDismiss = { showReaderMenu = false },
-                onTableOfContents = { /* TODO */ },
-                onBookmarks = { /* TODO */ },
-                onSearch = { /* TODO */ },
-                onSettings = { /* TODO */ }
+                onTableOfContents = { viewModel.showTableOfContents() },
+                onBookmarks = { viewModel.showBookmarks() },
+                onSearch = { viewModel.showSearch() },
+                onSettings = { viewModel.showSettings() }
             )
         }
     }
@@ -183,8 +227,4 @@ private fun ReaderMenuDialog(
             }
         }
     )
-}
-
-private fun generateSamplePages(): List<String> {
-    return (1..24).map { "https://example.com/page$it.jpg" }
 }
