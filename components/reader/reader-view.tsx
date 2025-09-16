@@ -202,7 +202,7 @@ export function ReaderView({ onClose }: ReaderViewProps) {
       >
         <div className={`max-w-4xl w-full h-full rounded-lg shadow-lg overflow-hidden ${getBackgroundClass()}`}>
           <img
-            src={currentPageData?.imageUrl || "/placeholder.svg?height=800&width=600&query=comic book page"}
+            src={currentPageData.imageUrl || "/placeholder.svg?height=800&width=600&query=comic book page"}
             alt={`Page ${currentPage + 1}`}
             className="w-full h-full object-contain"
           />
