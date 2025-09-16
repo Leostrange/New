@@ -11,6 +11,8 @@ import java.io.File
 import java.util.zip.ZipFile
 import javax.inject.Inject
 import javax.inject.Singleton
+import android.graphics.pdf.PdfRenderer
+import android.os.ParcelFileDescriptor
 
 @Singleton
 class ComicRepositoryImpl @Inject constructor(
@@ -74,13 +76,55 @@ class ComicRepositoryImpl @Inject constructor(
     }
 
     private suspend fun extractCBRPages(comic: Comic): List<ComicPage> {
-        // Implement RAR extraction using appropriate library
-        return emptyList()
+        return try {
+            val process = ProcessBuilder("unrar", "lb", comic.filePath).start()
+            val output = process.inputStream.bufferedReader().readText()
+            val imageFiles = output.lines()
+                .filter { line ->
+                    line.lowercase().matches(Regex(".*\\.(jpg|jpeg|png|gif|webp)$"))
+                }
+                .sorted()
+
+            imageFiles.mapIndexed { index, fileName ->
+                ComicPage(
+                    id = "${comic.id}_page_$index",
+                    comicId = comic.id,
+                    pageNumber = index,
+                    imageUrl = "cbr://${comic.filePath}#$fileName",
+                    fileSize = 0L
+                )
+            }
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 
     private suspend fun extractPDFPages(comic: Comic): List<ComicPage> {
-        // Implement PDF page extraction using PdfRenderer
-        return emptyList()
+        return try {
+            val pdfRenderer = PdfRenderer(
+                ParcelFileDescriptor.open(
+                    File(comic.filePath),
+                    ParcelFileDescriptor.MODE_READ_ONLY
+                )
+            )
+            
+            val pages = mutableListOf<ComicPage>()
+            for (i in 0 until pdfRenderer.pageCount) {
+                pages.add(
+                    ComicPage(
+                        id = "${comic.id}_page_$i",
+                        comicId = comic.id,
+                        pageNumber = i,
+                        imageUrl = "pdf://${comic.filePath}#$i",
+                        fileSize = 0L
+                    )
+                )
+            }
+            pdfRenderer.close()
+            pages
+        } catch (e: Exception) {
+            emptyList()
+        }
     }
 }
 
