@@ -18,6 +18,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
+import com.mrcomic.core.ui.components.MrComicButton
+import com.mrcomic.core.ui.components.ButtonVariant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,9 +62,10 @@ fun ReaderScreen(
                     text = "Ошибка загрузки: ${uiState.error}",
                     color = MaterialTheme.colorScheme.error
                 )
-                Button(
+                MrComicButton(
                     onClick = { viewModel.loadComic(comicId) },
-                    modifier = Modifier.padding(top = 16.dp)
+                    modifier = Modifier.padding(top = 16.dp),
+                    variant = ButtonVariant.Primary
                 ) {
                     Text("Повторить")
                 }
@@ -92,8 +95,11 @@ fun ReaderScreen(
                     }
                 },
                 actions = {
-                    TextButton(onClick = onBackClick) {
-                        Text("Выйти")
+                    MrComicButton(
+                        onClick = onBackClick,
+                        variant = ButtonVariant.Ghost
+                    ) {
+                        Text("Выйти", color = Color.White)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -179,50 +185,45 @@ private fun ReaderMenuDialog(
         title = { Text("Reader Menu") },
         text = {
             Column {
-                TextButton(
+                MrComicButton(
                     onClick = { onTableOfContents(); onDismiss() },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    variant = ButtonVariant.Ghost,
+                    icon = Icons.Default.List
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.List, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Table of Contents")
-                    }
+                    Text("Table of Contents")
                 }
-                TextButton(
+                MrComicButton(
                     onClick = { onBookmarks(); onDismiss() },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    variant = ButtonVariant.Ghost,
+                    icon = Icons.Default.Bookmark
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Bookmark, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Bookmarks")
-                    }
+                    Text("Bookmarks")
                 }
-                TextButton(
+                MrComicButton(
                     onClick = { onSearch(); onDismiss() },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    variant = ButtonVariant.Ghost,
+                    icon = Icons.Default.Search
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Search, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Search")
-                    }
+                    Text("Search")
                 }
-                TextButton(
+                MrComicButton(
                     onClick = { onSettings(); onDismiss() },
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
+                    variant = ButtonVariant.Ghost,
+                    icon = Icons.Default.Settings
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Settings, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Settings")
-                    }
+                    Text("Settings")
                 }
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) {
+            MrComicButton(
+                onClick = onDismiss,
+                variant = ButtonVariant.Ghost
+            ) {
                 Text("Закрыть")
             }
         }
