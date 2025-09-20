@@ -10,12 +10,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TranslationsScreen(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: TranslationsViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("Переводчик", "OCR", "Настройки")
 
@@ -35,19 +39,19 @@ fun TranslationsScreen(
         }
 
         when (selectedTab) {
-            0 -> TranslatorContent()
-            1 -> OCRContent()
-            2 -> TranslationSettingsContent()
+            0 -> TranslatorContent(uiState = uiState, viewModel = viewModel)
+            1 -> OCRContent(uiState = uiState, viewModel = viewModel)
+            2 -> TranslationSettingsContent(uiState = uiState, viewModel = viewModel)
         }
     }
 }
 
 @Composable
-private fun TranslatorContent() {
+private fun TranslatorContent(
+    uiState: TranslationsUiState,
+    viewModel: TranslationsViewModel
+) {
     var sourceText by remember { mutableStateOf("") }
-    var translatedText by remember { mutableStateOf("") }
-    var sourceLanguage by remember { mutableStateOf("English") }
-    var targetLanguage by remember { mutableStateOf("Russian") }
 
     Column(
         modifier = Modifier
@@ -60,15 +64,11 @@ private fun TranslatorContent() {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(sourceLanguage, style = MaterialTheme.typography.bodyLarge)
-            IconButton(onClick = { 
-                val temp = sourceLanguage
-                sourceLanguage = targetLanguage
-                targetLanguage = temp
-            }) {
+            Text(uiState.sourceLanguage, style = MaterialTheme.typography.bodyLarge)
+            IconButton(onClick = viewModel::swapLanguages) {
                 Icon(Icons.Default.SwapHoriz, contentDescription = "Поменять языки")
             }
-            Text(targetLanguage, style = MaterialTheme.typography.bodyLarge)
+            Text(uiState.targetLanguage, style = MaterialTheme.typography.bodyLarge)
         }
 
         OutlinedTextField(
@@ -86,34 +86,44 @@ private fun TranslatorContent() {
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Button(
-                onClick = { translatedText = "Переведенный текст появится здесь..." },
-                modifier = Modifier.weight(1f)
+                onClick = { 
+                    viewModel.translateText(sourceText, uiState.sourceLanguage, uiState.targetLanguage)
+                },
+                modifier = Modifier.weight(1f),
+                enabled = !uiState.isTranslating
             ) {
-                Text("Перевести")
+                if (uiState.isTranslating) {
+                    CircularProgressIndicator(modifier = Modifier.size(16.dp))
+                } else {
+                    Text("Перевести")
+                }
             }
             
-            OutlinedButton(
-                onClick = { /* TODO: Open camera for OCR */ }
-            ) {
+            OutlinedButton(onClick = { /* TODO: Open camera for OCR */ }) {
                 Icon(Icons.Default.CameraAlt, contentDescription = "Сканировать")
             }
         }
 
         OutlinedTextField(
-            value = translatedText,
+            value = uiState.translatedText,
             onValueChange = { },
             label = { Text("Перевод") },
             readOnly = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(120.dp),
-            maxLines = 5
+            maxLines = 5,
+            isError = uiState.translationError != null,
+            supportingText = uiState.translationError?.let { { Text(it) } }
         )
     }
 }
 
 @Composable
-private fun OCRContent() {
+private fun OCRContent(
+    uiState: TranslationsUiState,
+    viewModel: TranslationsViewModel
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -160,7 +170,10 @@ private fun OCRContent() {
 }
 
 @Composable
-private fun TranslationSettingsContent() {
+private fun TranslationSettingsContent(
+    uiState: TranslationsUiState,
+    viewModel: TranslationsViewModel
+) {
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()

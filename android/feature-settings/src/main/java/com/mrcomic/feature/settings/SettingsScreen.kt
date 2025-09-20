@@ -14,15 +14,19 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.mrcomic.core.ui.theme.AppTheme
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.mrcomic.feature.settings.ui.theme.SettingsViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    currentTheme: AppTheme,
-    onThemeChange: (AppTheme) -> Unit,
     onBackClick: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    viewModel: SettingsViewModel = hiltViewModel()
 ) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    
     var showThemeDialog by remember { mutableStateOf(false) }
     var showLanguageDialog by remember { mutableStateOf(false) }
     var showThemeBuilderDialog by remember { mutableStateOf(false) }
@@ -144,7 +148,7 @@ fun SettingsScreen(
                     
                     SettingsItem(
                         title = "Theme Selection",
-                        subtitle = currentTheme.name,
+                        subtitle = uiState.currentTheme.name,
                         icon = Icons.Default.Palette,
                         onClick = { showThemeDialog = true }
                     )
@@ -206,54 +210,47 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.titleMedium
                     )
                     
-                    var performanceMode by remember { mutableStateOf("Maximum") }
-                    var reduceAnimations by remember { mutableStateOf(false) }
-                    var asyncCoverLoading by remember { mutableStateOf(true) }
-                    var compressImages by remember { mutableStateOf(true) }
-                    var nightModeOptimization by remember { mutableStateOf(false) }
-                    var disableOnlineOnSlowInternet by remember { mutableStateOf(false) }
-                    
                     SettingsItem(
                         title = "Performance Mode",
-                        subtitle = performanceMode,
+                        subtitle = uiState.performanceMode,
                         icon = Icons.Default.Speed,
                         onClick = { /* TODO: Show performance mode dialog */ }
                     )
                     
                     SettingsItemWithSwitch(
                         title = "Reduce Animations",
-                        checked = reduceAnimations,
-                        onCheckedChange = { reduceAnimations = it }
+                        checked = uiState.reduceAnimations,
+                        onCheckedChange = viewModel::updateReduceAnimations
                     )
                     
                     SettingsItemWithSwitch(
                         title = "Async Cover Loading",
-                        checked = asyncCoverLoading,
-                        onCheckedChange = { asyncCoverLoading = it }
+                        checked = uiState.asyncCoverLoading,
+                        onCheckedChange = viewModel::updateAsyncCoverLoading
                     )
                     
                     SettingsItemWithSwitch(
                         title = "Compress Images on Import",
-                        checked = compressImages,
-                        onCheckedChange = { compressImages = it }
+                        checked = uiState.compressImages,
+                        onCheckedChange = viewModel::updateCompressImages
                     )
                     
                     SettingsItemWithSwitch(
                         title = "Night Mode Optimization",
-                        checked = nightModeOptimization,
-                        onCheckedChange = { nightModeOptimization = it }
+                        checked = uiState.nightModeOptimization,
+                        onCheckedChange = viewModel::updateNightModeOptimization
                     )
                     
                     SettingsItemWithSwitch(
                         title = "Disable Online Functions on Slow Internet",
-                        checked = disableOnlineOnSlowInternet,
-                        onCheckedChange = { disableOnlineOnSlowInternet = it }
+                        checked = uiState.disableOnlineOnSlowInternet,
+                        onCheckedChange = viewModel::updateDisableOnlineOnSlowInternet
                     )
                     
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     Button(
-                        onClick = { /* TODO: Clear cache */ },
+                        onClick = viewModel::clearCache,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Icon(Icons.Default.Delete, contentDescription = null)
@@ -267,9 +264,9 @@ fun SettingsScreen(
     
     if (showThemeDialog) {
         ThemeSelectionDialog(
-            currentTheme = currentTheme,
+            currentTheme = uiState.currentTheme,
             onThemeSelected = { theme ->
-                onThemeChange(theme)
+                viewModel.updateTheme(theme)
                 showThemeDialog = false
             },
             onDismiss = { showThemeDialog = false }
