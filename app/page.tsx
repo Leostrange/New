@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { LoginForm } from "@/components/auth/login-form"
-import { RegisterForm } from "@/components/auth/register-form"
 import { MainApp } from "@/components/main-app"
 import { AndroidLibraryDemo } from "@/components/android-demo/android-library"
 import { Button } from "@/components/ui/button"
@@ -10,7 +9,6 @@ import { MrComicShowcase } from "@/components/project-demo/mr-comic-showcase"
 
 export default function HomePage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [showRegister, setShowRegister] = useState(false)
   const [showAndroidDemo, setShowAndroidDemo] = useState(false)
   const [showProjectResult, setShowProjectResult] = useState(true)
 
@@ -60,11 +58,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {showRegister ? (
-          <RegisterForm onSuccess={() => setIsAuthenticated(true)} onSwitchToLogin={() => setShowRegister(false)} />
-        ) : (
-          <LoginForm onSuccess={() => setIsAuthenticated(true)} onSwitchToRegister={() => setShowRegister(true)} />
-        )}
+        <LoginForm onSuccess={() => setIsAuthenticated(true)} />
       </div>
     </div>
   )

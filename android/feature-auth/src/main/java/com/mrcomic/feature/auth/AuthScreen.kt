@@ -26,7 +26,6 @@ fun AuthScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var isLogin by remember { mutableStateOf(true) }
 
     LaunchedEffect(uiState.isAuthenticated) {
         if (uiState.isAuthenticated) {
@@ -42,7 +41,7 @@ fun AuthScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = if (isLogin) "Вход в Mr.Comic" else "Регистрация",
+            text = "Вход в Mr.Comic",
             style = MaterialTheme.typography.headlineMedium,
             modifier = Modifier.padding(bottom = 32.dp)
         )
@@ -82,11 +81,7 @@ fun AuthScreen(
 
         Button(
             onClick = {
-                if (isLogin) {
-                    viewModel.signIn(email, password)
-                } else {
-                    viewModel.signUp(email, password)
-                }
+                viewModel.signIn(email, password)
             },
             modifier = Modifier.fillMaxWidth(),
             enabled = !uiState.isLoading
@@ -97,19 +92,8 @@ fun AuthScreen(
                     strokeWidth = 2.dp
                 )
             } else {
-                Text(if (isLogin) "Войти" else "Зарегистрироваться")
+                Text("Войти")
             }
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        TextButton(
-            onClick = { isLogin = !isLogin }
-        ) {
-            Text(
-                if (isLogin) "Нет аккаунта? Зарегистрироваться" 
-                else "Уже есть аккаунт? Войти"
-            )
         }
 
         if (uiState.error != null) {
