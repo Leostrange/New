@@ -11,10 +11,9 @@ import { Eye, EyeOff } from "lucide-react"
 
 interface LoginFormProps {
   onSuccess: () => void
-  onSwitchToRegister: () => void
 }
 
-export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
+export function LoginForm({ onSuccess }: LoginFormProps) {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -74,28 +73,9 @@ export function LoginForm({ onSuccess, onSwitchToRegister }: LoginFormProps) {
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
-            <Button
-              type="button"
-              variant="link"
-              className="px-0 font-normal text-sm"
-              onClick={() => {
-                /* TODO: Implement forgot password */
-              }}
-            >
-              Забыли пароль?
-            </Button>
-          </div>
-
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Вход..." : "Войти"}
           </Button>
-
-          <div className="text-center">
-            <Button type="button" variant="link" onClick={onSwitchToRegister} className="text-sm">
-              Нет аккаунта? Зарегистрироваться
-            </Button>
-          </div>
         </form>
       </CardContent>
     </Card>
