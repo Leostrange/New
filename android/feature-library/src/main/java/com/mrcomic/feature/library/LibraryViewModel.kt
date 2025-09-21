@@ -16,6 +16,7 @@ class LibraryViewModel @Inject constructor(
 
     private val _searchQuery = MutableStateFlow("")
     private val _isSearchVisible = MutableStateFlow(false)
+    private val _isGridView = MutableStateFlow(true)
     
     private val comics = comicRepository.getAllComics()
         .stateIn(
@@ -27,8 +28,9 @@ class LibraryViewModel @Inject constructor(
     val uiState = combine(
         comics,
         _searchQuery,
-        _isSearchVisible
-    ) { comicsList, query, searchVisible ->
+        _isSearchVisible,
+        _isGridView
+    ) { comicsList, query, searchVisible, gridView ->
         LibraryUiState(
             comics = comicsList,
             filteredComics = if (query.isBlank()) {
@@ -40,7 +42,8 @@ class LibraryViewModel @Inject constructor(
                 }
             },
             searchQuery = query,
-            isSearchVisible = searchVisible
+            isSearchVisible = searchVisible,
+            isGridView = gridView
         )
     }.stateIn(
         scope = viewModelScope,
@@ -58,6 +61,17 @@ class LibraryViewModel @Inject constructor(
             _searchQuery.value = ""
         }
     }
+
+    fun toggleViewMode() {
+        _isGridView.value = !_isGridView.value
+    }
+
+    fun openFilePicker() {
+        viewModelScope.launch {
+            // TODO: Implement file picker logic
+            // This will be handled by the UI layer through activity result contracts
+        }
+    }
 }
 
 data class LibraryUiState(
@@ -65,5 +79,6 @@ data class LibraryUiState(
     val filteredComics: List<Comic> = emptyList(),
     val searchQuery: String = "",
     val isSearchVisible: Boolean = false,
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val isGridView: Boolean = true
 )

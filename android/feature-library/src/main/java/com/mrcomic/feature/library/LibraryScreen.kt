@@ -1,9 +1,11 @@
 package com.mrcomic.feature.library
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -34,7 +36,7 @@ fun LibraryScreen(
         TopAppBar(
             title = { 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("Моя библиотека")
+                    Text("Mr.Comic")
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
                         text = "${uiState.comics.size}",
@@ -44,11 +46,17 @@ fun LibraryScreen(
                 }
             },
             actions = {
+                IconButton(onClick = { viewModel.openFilePicker() }) {
+                    Icon(Icons.Default.Add, contentDescription = "Добавить комикс")
+                }
                 IconButton(onClick = { viewModel.toggleSearch() }) {
                     Icon(Icons.Default.Search, contentDescription = "Поиск")
                 }
-                IconButton(onClick = { /* TODO: Toggle grid/list view */ }) {
-                    Icon(Icons.Default.GridView, contentDescription = "Режим просмотра")
+                IconButton(onClick = { viewModel.toggleViewMode() }) {
+                    Icon(
+                        if (uiState.isGridView) Icons.Default.ViewList else Icons.Default.GridView, 
+                        contentDescription = "Режим просмотра"
+                    )
                 }
             }
         )
@@ -76,11 +84,20 @@ fun LibraryScreen(
         }
 
         when (selectedTab) {
-            0 -> LibraryContent(
-                comics = uiState.filteredComics,
-                onComicClick = onComicClick,
-                modifier = Modifier.fillMaxSize()
-            )
+            0 -> {
+                if (uiState.comics.isEmpty()) {
+                    WelcomeContent(
+                        onAddComicClick = { viewModel.openFilePicker() }
+                    )
+                } else {
+                    LibraryContent(
+                        comics = uiState.filteredComics,
+                        onComicClick = onComicClick,
+                        isGridView = uiState.isGridView,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
             1 -> CloudContent()
             2 -> AnnotationsContent()
             3 -> PluginsContent()
@@ -89,28 +106,146 @@ fun LibraryScreen(
 }
 
 @Composable
+private fun WelcomeContent(
+    onAddComicClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Icon(
+            Icons.Default.MenuBook,
+            contentDescription = null,
+            modifier = Modifier.size(120.dp),
+            tint = MaterialTheme.colorScheme.primary
+        )
+        
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        Text(
+            text = "Добро пожаловать в Mr.Comic!",
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Text(
+            text = "Начните читать комиксы, добавив их из файлов на устройстве",
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+        )
+        
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        Button(
+            onClick = onAddComicClick,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Default.Add, contentDescription = null)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("Добавить комикс")
+        }
+    }
+}
+
+@Composable
 private fun LibraryContent(
     comics: List<Comic>,
     onComicClick: (Comic) -> Unit,
+    isGridView: Boolean,
     modifier: Modifier = Modifier
 ) {
-    LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 120.dp),
-        contentPadding = PaddingValues(16.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        modifier = modifier
-    ) {
-        items(comics) { comic ->
-            ComicCard(
-                comic = comic,
-                onClick = { onComicClick(comic) }
-            )
+    if (isGridView) {
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(minSize = 120.dp),
+            contentPadding = PaddingValues(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            modifier = modifier
+        ) {
+            items(comics) { comic ->
+                ComicCard(
+                    comic = comic,
+                    onClick = { onComicClick(comic) }
+                )
+            }
+        }
+    } else {
+        LazyColumn(
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = modifier
+        ) {
+            items(comics) { comic ->
+                ComicListItem(
+                    comic = comic,
+                    onClick = { onComicClick(comic) }
+                )
+            }
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ComicListItem(
+    comic: Comic,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            AsyncImage(
+                model = comic.coverPath,
+                contentDescription = comic.title,
+                contentScale = ContentScale.Crop,
+                placeholder = painterResource(id = android.R.drawable.ic_menu_gallery),
+                modifier = Modifier
+                    .size(60.dp)
+                    .aspectRatio(0.7f)
+            )
+            
+            Spacer(modifier = Modifier.width(12.dp))
+            
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = comic.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                
+                if (comic.progress > 0) {
+                    Text(
+                        text = "Прочитано ${(comic.progress * 100).toInt()}%",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    
+                    LinearProgressIndicator(
+                        progress = comic.progress,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 4.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
 @Composable
 private fun ComicCard(
     comic: Comic,
