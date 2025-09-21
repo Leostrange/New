@@ -1,14 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { LoginForm } from "@/components/auth/login-form"
 import { MainApp } from "@/components/main-app"
 import { AndroidLibraryDemo } from "@/components/android-demo/android-library"
 import { Button } from "@/components/ui/button"
 import { MrComicShowcase } from "@/components/project-demo/mr-comic-showcase"
 
 export default function HomePage() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [showAndroidDemo, setShowAndroidDemo] = useState(false)
   const [showProjectResult, setShowProjectResult] = useState(true)
 
@@ -42,24 +40,14 @@ export default function HomePage() {
     )
   }
 
-  if (isAuthenticated) {
-    return (
-      <div className="space-y-4">
-        <div className="p-4 text-center">
-          <Button onClick={() => setShowAndroidDemo(true)} variant="outline">
-            Показать Android Demo
-          </Button>
-        </div>
-        <MainApp />
-      </div>
-    )
-  }
-
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <LoginForm onSuccess={() => setIsAuthenticated(true)} />
+    <div className="space-y-4">
+      <div className="p-4 text-center">
+        <Button onClick={() => setShowAndroidDemo(true)} variant="outline">
+          Показать Android Demo
+        </Button>
       </div>
+      <MainApp />
     </div>
   )
 }
